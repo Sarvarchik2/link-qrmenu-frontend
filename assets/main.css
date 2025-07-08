@@ -1,38 +1,60 @@
+/* OddMenu style base */
+:root {
+  --oddmenu-orange: #F39C12;
+  --oddmenu-red: #E74C3C;
+  --oddmenu-bg: #faf8f6;
+  --oddmenu-card-bg: #fff;
+  --oddmenu-radius: 24px;
+  --oddmenu-shadow: 0 6px 32px #0002;
+  --oddmenu-shadow-hover: 0 10px 40px #0003;
+  --oddmenu-font: 'Roboto', 'Arial', sans-serif;
+}
+* {
+  box-sizing: border-box;
+}
 body {
-  background: #F8F5F2;
-  color: #333333;
-  font-family: 'Roboto', 'Arial', sans-serif;
+  background: var(--oddmenu-bg);
+  color: #333;
+  font-family: var(--oddmenu-font);
   margin: 0;
   padding: 0;
 }
-
 h1, h2, h3, h4, h5, h6 {
-  font-weight: bold;
+  font-weight: 800;
+  letter-spacing: 1px;
 }
-
 button, .accent {
-  background: #E74C3C;
+  background: var(--oddmenu-red);
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 10px 20px;
-  font-weight: bold;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 1.08rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  box-shadow: 0 2px 12px #F39C1240;
 }
 button:hover, .accent:hover {
-  background: #c0392b;
+  background: var(--oddmenu-orange);
+  box-shadow: 0 4px 18px #F39C1240;
+  transform: scale(1.04);
 }
-
 input, select, textarea {
   font-family: inherit;
   font-size: 1rem;
-  border-radius: 6px;
-  border: 1px solid #ddd;
-  padding: 8px;
-  margin-bottom: 12px;
+  border-radius: 10px;
+  border: 1.5px solid #f0ece8;
+  padding: 12px 16px;
+  background: #F8F5F2;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 6px #F39C1220;
 }
-
+input:focus, select:focus, textarea:focus {
+  border: 1.5px solid var(--oddmenu-orange);
+  box-shadow: 0 2px 12px #F39C1240;
+}
 .highlight {
   background: #F39C12;
   color: #fff;

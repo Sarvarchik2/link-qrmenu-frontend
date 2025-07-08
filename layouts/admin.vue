@@ -1,12 +1,15 @@
 <template>
   <div class="admin-layout">
-    <aside class="admin-sidebar">
+    <button class="sidebar-toggle" @click="sidebarOpen = true" v-if="isMobile && !sidebarOpen">☰</button>
+    <div v-if="sidebarOpen && isMobile" class="sidebar-overlay" @click="sidebarOpen = false"></div>
+    <aside class="admin-sidebar" :class="{ open: sidebarOpen || !isMobile }">
       <div class="sidebar-title">Admin</div>
       <NuxtLink to="/admin/dashboard" active-class="active"><span>🏠</span> Дашборд</NuxtLink>
       <NuxtLink to="/admin/menu" active-class="active"><span>📋</span> Меню</NuxtLink>
       <NuxtLink to="/admin/add-dish" active-class="active"><span>➕</span> Добавить блюдо</NuxtLink>
       <NuxtLink to="/admin/orders" active-class="active"><span>🛒</span> Заказы</NuxtLink>
       <button class="admin-logout" @click="logout"><span>🚪</span> Выйти</button>
+      <button v-if="isMobile" class="sidebar-close" @click="sidebarOpen = false">✕</button>
     </aside>
     <main class="admin-main">
       <slot />
@@ -16,7 +19,7 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { onMounted } from 'vue'
+import { onMounted, ref, computed, onBeforeUnmount } from 'vue'
 const router = useRouter()
 function logout() {
   localStorage.removeItem('admin_auth')
@@ -26,6 +29,19 @@ onMounted(() => {
   if (localStorage.getItem('admin_auth') !== '1') {
     router.push('/login')
   }
+})
+const sidebarOpen = ref(false)
+const isMobile = ref(false)
+function handleResize() {
+  isMobile.value = window.innerWidth <= 700
+  if (!isMobile.value) sidebarOpen.value = false
+}
+onMounted(() => {
+  handleResize()
+  window.addEventListener('resize', handleResize)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
 })
 </script>
 
@@ -49,7 +65,8 @@ onMounted(() => {
   top: 0;
   left: 0;
   bottom: 0;
-  z-index: 10;
+  z-index: 1100;
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1);
 }
 .sidebar-title {
   font-size: 1.3rem;
@@ -101,23 +118,56 @@ onMounted(() => {
   flex: 1;
   min-height: 100vh;
 }
+.sidebar-toggle {
+  display: none;
+}
+.sidebar-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: none;
+  color: #E74C3C;
+  font-size: 1.5rem;
+  border: none;
+  cursor: pointer;
+  z-index: 1200;
+}
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.25);
+  z-index: 1099;
+  transition: opacity 0.2s;
+}
 @media (max-width: 700px) {
   .admin-sidebar {
-    width: 100px;
+    width: 220px;
+    transform: translateX(-100%);
     padding: 18px 0 0 0;
   }
-  .admin-sidebar a, .admin-logout {
-    font-size: 0.95rem;
-    padding: 10px 10px;
-    border-radius: 0 12px 12px 0;
-    justify-content: flex-start;
+  .admin-sidebar.open {
+    transform: translateX(0);
   }
-  .sidebar-title {
-    font-size: 1rem;
-    margin-bottom: 18px;
+  .sidebar-toggle {
+    display: block;
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 1201;
+    background: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 2rem;
+    padding: 6px 16px 6px 12px;
+    box-shadow: 0 2px 12px #0001;
+    color: #F39C12;
+    cursor: pointer;
   }
   .admin-main {
-    padding-left: 120px;
+    padding-left: 0;
   }
 }
 </style> 
