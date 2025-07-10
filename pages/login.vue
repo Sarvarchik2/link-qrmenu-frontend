@@ -2,29 +2,36 @@
   <div class="login-wrap">
     <form class="login-form" @submit.prevent="login">
       <h2 class="login-title">Вход для владельца</h2>
-      <input v-model="email" type="email" placeholder="Email" required />
+      <input v-model="username" type="text" placeholder="Username" required />
       <input v-model="password" type="password" placeholder="Пароль" required />
-      <button type="submit">Войти</button>
+      <button type="submit" :disabled="loading">Войти</button>
       <div v-if="error" class="login-error">{{ error }}</div>
     </form>
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-const email = ref('')
+import { useAuthStore } from '@/stores/authStore'
+
+const username = ref('')
 const password = ref('')
 const error = ref('')
+const loading = ref(false)
 const router = useRouter()
-const ADMIN_EMAIL = 'admin@demo.com'
-const ADMIN_PASS = '123456'
-function login() {
-  if (email.value === ADMIN_EMAIL && password.value === ADMIN_PASS) {
-    localStorage.setItem('admin_auth', '1')
+const auth = useAuthStore()
+
+async function login() {
+  error.value = ''
+  loading.value = true
+  try {
+    await auth.login(username.value, password.value)
     router.push('/admin/dashboard')
-  } else {
-    error.value = 'Неверный email или пароль'
+  } catch (e: any) {
+    error.value = 'Ошибка входа: ' + (e?.message || 'Проверьте username и пароль')
+  } finally {
+    loading.value = false
   }
 }
 </script>

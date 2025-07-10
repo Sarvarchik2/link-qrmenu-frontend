@@ -3,20 +3,39 @@
     <h1 class="admin-title">Дашборд ресторана</h1>
     <div class="admin-stats">
       <div class="admin-stat">
-        <div class="admin-stat-value">12</div>
+        <div class="admin-stat-value">{{ itemsCount }}</div>
         <div class="admin-stat-label">Блюд в меню</div>
       </div>
       <div class="admin-stat">
-        <div class="admin-stat-value">5</div>
+        <div class="admin-stat-value">{{ ordersCount }}</div>
         <div class="admin-stat-label">Заказов</div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-definePageMeta({ layout: 'admin' })
-// Позже сюда добавим реальные данные из стора
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { apiFetch } from '@/utils/api';
+definePageMeta({ layout: 'admin', middleware: 'auth' })
+
+const itemsCount = ref(0);
+const ordersCount = ref(0);
+
+onMounted(async () => {
+  try {
+    // Получаем блюда
+    const items = await apiFetch('/api/owner/items/');
+    itemsCount.value = Array.isArray(items) ? items.length : (items.results?.length || 0);
+    // Получаем заказы
+    const orders = await apiFetch('/api/owner/orders/');
+    ordersCount.value = Array.isArray(orders) ? orders.length : (orders.results?.length || 0);
+  } catch (e) {
+    // Можно добавить обработку ошибок
+    itemsCount.value = 0;
+    ordersCount.value = 0;
+  }
+});
 </script>
 
 <style scoped>
@@ -56,6 +75,7 @@ definePageMeta({ layout: 'admin' })
   box-shadow: 0 2px 12px #F39C1240;
   min-width: 110px;
   transition: box-shadow 0.2s, transform 0.15s;
+  width: 45%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -87,7 +107,6 @@ definePageMeta({ layout: 'admin' })
     margin-bottom: 14px;
   }
   .admin-stats {
-    flex-direction: column;
     gap: 10px;
     align-items: center;
   }

@@ -2,30 +2,86 @@
   <div class="add-dish-wrap">
     <h1 class="admin-title">Добавить блюдо</h1>
     <form class="add-dish-form" @submit.prevent="addDish">
+      <select v-model="category" required>
+        <option value="">Выберите категорию</option>
+        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+      </select>
       <input v-model="name" type="text" placeholder="Название блюда" required />
-      <input v-model="price" type="number" placeholder="Цена" required />
-      <input v-model="img" type="url" placeholder="Ссылка на картинку" required />
-      <button type="submit">Добавить</button>
+      <textarea v-model="description" placeholder="Описание блюда"></textarea>
+      <input v-model="price" type="text" placeholder="Цена (например: 1500.00)" required />
+      <div class="checkboxes">
+        <label>
+          <input v-model="isHit" type="checkbox" />
+          Хит продаж
+        </label>
+        <label>
+          <input v-model="isVegetarian" type="checkbox" />
+          Вегетарианское
+        </label>
+      </div>
+      <button type="submit" :disabled="loading">Добавить</button>
     </form>
     <div v-if="success" class="add-dish-success">Блюдо добавлено!</div>
+    <div v-if="error" class="add-dish-error">Ошибка: {{ error }}</div>
   </div>
 </template>
 
-<script setup>
-definePageMeta({ layout: 'admin' })
-import { ref } from 'vue'
+<script setup lang="ts">
+definePageMeta({ layout: 'admin', middleware: 'auth' })
+import { ref, onMounted } from 'vue'
+import { apiFetch } from '@/utils/api'
 const name = ref('')
+const category = ref('')
+const description = ref('')
 const price = ref('')
-const img = ref('')
+const isHit = ref(false)
+const isVegetarian = ref(false)
 const success = ref(false)
-function addDish() {
-  // Здесь будет логика добавления блюда в хранилище
-  name.value = ''
-  price.value = ''
-  img.value = ''
-  success.value = true
-  setTimeout(() => success.value = false, 2000)
+const error = ref('')
+const loading = ref(false)
+const categories = ref<any[]>([])
+
+async function fetchCategories() {
+  try {
+    const res = await apiFetch('/api/owner/categories/')
+    categories.value = Array.isArray(res) ? res : (res.results || [])
+  } catch (e: any) {
+    error.value = e?.message || 'Ошибка загрузки категорий'
+  }
 }
+
+async function addDish() {
+  error.value = ''
+  loading.value = true
+  try {
+    await apiFetch('/api/owner/items/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category: parseInt(category.value),
+        name: name.value,
+        description: description.value,
+        price: price.value,
+        is_hit: isHit.value,
+        is_vegetarian: isVegetarian.value
+      })
+    })
+    name.value = ''
+    category.value = ''
+    description.value = ''
+    price.value = ''
+    isHit.value = false
+    isVegetarian.value = false
+    success.value = true
+    setTimeout(() => success.value = false, 2000)
+  } catch (e: any) {
+    error.value = e?.message || 'Ошибка добавления'
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(fetchCategories)
 </script>
 
 <style scoped>
@@ -94,6 +150,46 @@ function addDish() {
   text-align: center;
   font-size: 1.1rem;
   margin-top: 18px;
+}
+.add-dish-error {
+  color: #E74C3C;
+  text-align: center;
+  font-size: 1.1rem;
+  margin-top: 18px;
+}
+.add-dish-form select {
+  font-size: 1.08rem;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #f0ece8;
+  background: #F8F5F2;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 6px #F39C1220;
+}
+.add-dish-form textarea {
+  font-size: 1.08rem;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1.5px solid #f0ece8;
+  background: #F8F5F2;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 6px #F39C1220;
+  resize: vertical;
+  min-height: 80px;
+}
+.checkboxes {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.checkboxes label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+  color: #555;
 }
 @media (max-width: 500px) {
   .add-dish-wrap {

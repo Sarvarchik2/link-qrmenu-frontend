@@ -2,25 +2,64 @@
   <div class="admin-menu">
     <h1 class="admin-title">Меню ресторана</h1>
     <NuxtLink to="/admin/add-dish" class="add-dish-btn">+ Добавить блюдо</NuxtLink>
+    <div v-if="loading" class="admin-loading">Загрузка...</div>
+    <div v-else-if="error" class="admin-error">Ошибка: {{ error }}</div>
     <div class="dish-list">
       <div v-for="dish in dishes" :key="dish.id" class="dish-card">
-        <img :src="dish.img" class="dish-img" />
+        <img :src="dish.photo || 'https://via.placeholder.com/54x54?text=No+Image'" class="dish-img" />
         <div class="dish-info">
           <div class="dish-title">{{ dish.name }}</div>
           <div class="dish-meta">{{ dish.price }} сум</div>
+          <div v-if="dish.description" class="dish-description">{{ dish.description }}</div>
+          <div class="dish-flags">
+            <span v-if="dish.is_hit" class="flag hit">Хит</span>
+            <span v-if="dish.is_vegetarian" class="flag veg">Вег</span>
+          </div>
         </div>
+        <button class="dish-delete" @click="deleteDish(dish.id)" :disabled="deletingId === dish.id">
+          <span v-if="deletingId === dish.id">...</span>
+          <span v-else>Удалить</span>
+        </button>
       </div>
     </div>
+    <div v-if="deleteError" class="admin-error">Ошибка удаления: {{ deleteError }}</div>
   </div>
 </template>
 
-<script setup>
-definePageMeta({ layout: 'admin' })
-// Заглушка для блюд
-const dishes = [
-  { id: 1, name: 'Маргарита', price: '599', img: 'https://images.unsplash.com/photo-1514361892635-cebbd82b8bdf?auto=format&fit=crop&w=800&q=80' },
-  { id: 2, name: 'Апероль', price: '499', img: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=800&q=80' },
-]
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { apiFetch } from '@/utils/api'
+definePageMeta({ layout: 'admin', middleware: 'auth' })
+const dishes = ref<any[]>([])
+const loading = ref(true)
+const error = ref('')
+const deletingId = ref<number|null>(null)
+const deleteError = ref('')
+async function fetchDishes() {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await apiFetch('/api/owner/items/')
+    dishes.value = Array.isArray(res) ? res : (res.results || [])
+  } catch (e: any) {
+    error.value = e?.message || 'Ошибка загрузки'
+  } finally {
+    loading.value = false
+  }
+}
+onMounted(fetchDishes)
+async function deleteDish(id: number) {
+  deleteError.value = ''
+  deletingId.value = id
+  try {
+    await apiFetch(`/api/owner/items/${id}/`, { method: 'DELETE' })
+    await fetchDishes()
+  } catch (e: any) {
+    deleteError.value = e?.message || 'Ошибка удаления'
+  } finally {
+    deletingId.value = null
+  }
+}
 </script>
 
 <style scoped>
@@ -102,6 +141,46 @@ const dishes = [
 .dish-meta {
   color: #888;
   font-size: 0.98rem;
+}
+.dish-description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 4px;
+}
+.dish-flags {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.flag {
+  font-size: 0.8rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+.flag.hit {
+  background: #F39C12;
+  color: #fff;
+}
+.flag.veg {
+  background: #27ae60;
+  color: #fff;
+}
+.dish-delete {
+  margin-left: auto;
+  background: #E74C3C;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 0.98rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dish-delete:active, .dish-delete:disabled {
+  background: #c0392b;
+  opacity: 0.7;
 }
 @media (max-width: 500px) {
   .admin-menu {

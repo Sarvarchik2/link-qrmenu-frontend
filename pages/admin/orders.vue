@@ -1,13 +1,19 @@
 <template>
   <div class="admin-orders">
     <h1 class="admin-title">Заказы</h1>
+    <div v-if="loading" class="admin-loading">Загрузка...</div>
+    <div v-else-if="error" class="admin-error">Ошибка: {{ error }}</div>
     <div class="order-list">
       <div v-for="order in orders" :key="order.id" class="order-card">
         <div class="order-id">Заказ #{{ order.id }}</div>
-        <div class="order-info">Имя: {{ order.name }}, Стол: {{ order.table }}</div>
+        <div class="order-info">
+          Имя: {{ order.guest_name }}, Стол: {{ order.table_number }}
+        </div>
+        <div class="order-status">Статус: {{ getStatusText(order.status) }}</div>
+        <div class="order-date">Дата: {{ formatDate(order.created_at) }}</div>
         <div class="order-items">
-          <div v-for="item in order.items" :key="item.name" class="order-item">
-            {{ item.name }} × {{ item.qty }}
+          <div v-for="item in order.items" :key="item.id" class="order-item">
+            {{ item.menu_item?.name || 'Блюдо' }} × {{ item.quantity }}
           </div>
         </div>
       </div>
@@ -15,13 +21,42 @@
   </div>
 </template>
 
-<script setup>
-definePageMeta({ layout: 'admin' })
-// Заглушка для заказов
-const orders = [
-  { id: 1, name: 'Гость', table: '1', items: [ { name: 'Маргарита', qty: 2 }, { name: 'Пиво', qty: 1 } ] },
-  { id: 2, name: 'Иван', table: '2', items: [ { name: 'Апероль', qty: 1 } ] },
-]
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import { apiFetch } from '@/utils/api'
+definePageMeta({ layout: 'admin', middleware: 'auth' })
+const orders = ref<any[]>([])
+const loading = ref(true)
+const error = ref('')
+
+function getStatusText(status: string) {
+  const statusMap: Record<string, string> = {
+    'pending': 'Ожидает',
+    'preparing': 'Готовится',
+    'ready': 'Готов',
+    'delivered': 'Доставлен'
+  }
+  return statusMap[status] || status
+}
+
+function formatDate(dateString: string) {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return date.toLocaleString('ru-RU')
+}
+
+onMounted(async () => {
+  loading.value = true
+  error.value = ''
+  try {
+    const res = await apiFetch('/api/owner/orders/')
+    orders.value = Array.isArray(res) ? res : (res.results || [])
+  } catch (e: any) {
+    error.value = e?.message || 'Ошибка загрузки заказов'
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
@@ -74,6 +109,17 @@ const orders = [
   font-size: 0.98rem;
   margin-bottom: 6px;
 }
+.order-status {
+  color: #F39C12;
+  font-size: 0.98rem;
+  margin-bottom: 4px;
+  font-weight: bold;
+}
+.order-date {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+}
 .order-items {
   display: flex;
   flex-wrap: wrap;
@@ -86,6 +132,16 @@ const orders = [
   font-size: 0.98rem;
   color: #333;
   box-shadow: 0 1px 4px #0001;
+}
+.admin-loading {
+  color: #888;
+  font-size: 1.1rem;
+  margin: 24px 0;
+}
+.admin-error {
+  color: #E74C3C;
+  font-size: 1.1rem;
+  margin: 24px 0;
 }
 @media (max-width: 500px) {
   .admin-orders {

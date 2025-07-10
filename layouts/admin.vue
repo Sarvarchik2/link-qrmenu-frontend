@@ -52,7 +52,7 @@ onBeforeUnmount(() => {
   display: flex;
 }
 .admin-sidebar {
-  width: 210px;
+  width: 280px;
   background: #fff;
   border-right: 1.5px solid #f0ece8;
   box-shadow: 2px 0 12px #0001;
@@ -112,9 +112,9 @@ onBeforeUnmount(() => {
   background: #c0392b;
 }
 .admin-main {
-  max-width: 900px;
   margin: 0 auto;
-  padding: 40px 24px 32px 240px;
+  padding: 15px;
+  width: 100%;
   flex: 1;
   min-height: 100vh;
 }
@@ -144,7 +144,6 @@ onBeforeUnmount(() => {
 }
 @media (max-width: 700px) {
   .admin-sidebar {
-    width: 220px;
     transform: translateX(-100%);
     padding: 18px 0 0 0;
   }
@@ -154,20 +153,18 @@ onBeforeUnmount(() => {
   .sidebar-toggle {
     display: block;
     position: fixed;
-    top: 18px;
-    left: 18px;
+    top: 10px;
+    left: 10px;
     z-index: 1201;
     background: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 2rem;
-    padding: 6px 16px 6px 12px;
+    font-size: 24px;
+    line-height: 21px;
+    padding: 12px;
     box-shadow: 0 2px 12px #0001;
     color: #F39C12;
     cursor: pointer;
-  }
-  .admin-main {
-    padding-left: 0;
   }
 }
 </style> 
