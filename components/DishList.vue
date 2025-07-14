@@ -32,7 +32,11 @@ const props = defineProps({
 const cart = useCartStore()
 const bounceId = ref(null)
 function addToCart(dish) {
-  cart.add(dish)
+  const BASE_URL = 'http://127.0.0.1:8000'
+  let img = dish.img || dish.photo || ''
+  if (img && img.startsWith('/')) img = BASE_URL + img
+  if (!img) img = 'https://via.placeholder.com/600x220?text=Dish'
+  cart.add({ ...dish, img })
   bounceId.value = dish.id
   setTimeout(() => bounceId.value = null, 400)
 }

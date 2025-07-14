@@ -27,6 +27,7 @@ async function login() {
   loading.value = true
   try {
     await auth.login(username.value, password.value)
+    localStorage.setItem('admin_auth', '1')
     router.push('/admin/dashboard')
   } catch (e: any) {
     error.value = 'Ошибка входа: ' + (e?.message || 'Проверьте username и пароль')

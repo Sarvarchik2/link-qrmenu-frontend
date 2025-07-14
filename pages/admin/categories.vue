@@ -1,37 +1,21 @@
 <template>
-  <div class="admin-restaurants modern-admin-bg">
-    <h1 class="admin-title">Рестораны</h1>
-    <div v-if="loading" class="admin-loading">Загрузка...</div>
-    <div v-else-if="error" class="admin-error">Ошибка: {{ error }}</div>
-    <div v-else>
-      <div v-if="restaurants.length === 0">Нет ресторанов</div>
-      <ul v-else class="restaurant-list">
-        <li v-for="r in restaurants" :key="r.id" class="restaurant-item">
-          <div class="restaurant-name">{{ r.name }}</div>
-          <div class="restaurant-address">{{ r.address }}</div>
-        </li>
-      </ul>
-    </div>
-    <h2 class="admin-title" style="margin-top:40px;">Категории</h2>
-    <button class="add-category-btn" @click="openAddCategoryModal">+ Добавить категорию</button>
-    <form class="category-form" @submit.prevent="addCategory" v-if="false">
-      <input v-model="newCategory" type="text" placeholder="Название категории" required />
-      <button type="submit" :disabled="catLoading">Добавить</button>
-    </form>
+  <div class="admin-categories modern-admin-bg">
+    <h1 class="admin-title">Категории</h1>
+    <button class="add-category-btn accent-btn" @click="openAddCategoryModal">➕ Добавить категорию</button>
     <div v-if="catError" class="admin-error">Ошибка: {{ catError }}</div>
     <div v-if="catLoading" class="admin-loading">Загрузка...</div>
     <ul class="category-list">
-      <li v-for="cat in categories" :key="cat.id" class="category-item">
-        <span>{{ cat.name }}</span>
-        <button @click="deleteCategory(cat.id)" :disabled="catDeletingId === cat.id">Удалить</button>
+      <li v-for="cat in categories" :key="cat.id" class="category-item modern-card">
+        <span class="category-name">{{ cat.name }}</span>
+        <button class="modern-btn delete" @click="deleteCategory(cat.id)" :disabled="catDeletingId === cat.id">Удалить</button>
       </li>
     </ul>
 
     <!-- Модальное окно для добавления категории -->
     <div v-if="addCategoryModalOpen" class="modal-overlay" @click.self="closeAddCategoryModal">
-      <div class="modal-content">
+      <div class="modal-content modern-modal">
         <h2 class="modal-title">Добавить категорию</h2>
-        <form class="add-category-form" @submit.prevent="submitAddCategory" enctype="multipart/form-data">
+        <form class="add-category-form modern-form" @submit.prevent="submitAddCategory" enctype="multipart/form-data">
           <input v-model="addCatName" type="text" placeholder="Название категории" required />
           <textarea v-model="addCatDesc" placeholder="Описание (необязательно)"></textarea>
           <div class="photo-upload-block">
@@ -46,8 +30,8 @@
             </div>
           </div>
           <div class="modal-actions">
-            <button type="button" class="modal-cancel" @click="closeAddCategoryModal">Отмена</button>
-            <button type="submit" class="modal-save" :disabled="addCatLoading">Добавить</button>
+            <button type="button" class="modern-btn cancel" @click="closeAddCategoryModal">Отмена</button>
+            <button type="submit" class="modern-btn save" :disabled="addCatLoading">Добавить</button>
           </div>
         </form>
         <div v-if="addCatError" class="add-dish-error">Ошибка: {{ addCatError }}</div>
@@ -55,18 +39,14 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { apiFetch } from '@/utils/api'
 definePageMeta({ layout: 'admin', middleware: 'auth' })
-const restaurants = ref<any[]>([])
-const loading = ref(true)
-const error = ref('')
-
 const categories = ref<any[]>([])
 const catLoading = ref(false)
 const catError = ref('')
-const newCategory = ref('')
 const catDeletingId = ref<number|null>(null)
 
 const addCategoryModalOpen = ref(false)
@@ -77,6 +57,7 @@ const addCatPhotoPreview = ref<string|null>(null)
 const addCatLoading = ref(false)
 const addCatError = ref('')
 const catFileInput = ref<HTMLInputElement|null>(null)
+const restaurantId = ref<number|null>(null)
 
 async function fetchCategories() {
   catLoading.value = true
@@ -86,24 +67,6 @@ async function fetchCategories() {
     categories.value = Array.isArray(res) ? res : (res.results || [])
   } catch (e: any) {
     catError.value = e?.message || 'Ошибка загрузки категорий'
-  } finally {
-    catLoading.value = false
-  }
-}
-
-async function addCategory() {
-  catError.value = ''
-  catLoading.value = true
-  try {
-    await apiFetch('/api/owner/categories/', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newCategory.value })
-    })
-    newCategory.value = ''
-    await fetchCategories()
-  } catch (e: any) {
-    catError.value = e?.message || 'Ошибка добавления'
   } finally {
     catLoading.value = false
   }
@@ -150,13 +113,32 @@ function onCatDrop(e: DragEvent) {
 function openCatFileDialog() {
   catFileInput.value?.click()
 }
+async function fetchRestaurantId() {
+  try {
+    const res = await apiFetch('/api/owner/info/')
+    if (res && res.id) {
+      restaurantId.value = res.id
+    } else {
+      addCatError.value = 'Не найден ресторан для владельца'
+    }
+  } catch (e: any) {
+    addCatError.value = 'Ошибка загрузки ресторана: ' + (e?.message || '')
+  }
+}
+
 async function submitAddCategory() {
   addCatError.value = ''
   addCatLoading.value = true
   try {
+    if (!restaurantId.value) {
+      addCatError.value = 'Не найден ресторан для владельца'
+      addCatLoading.value = false
+      return
+    }
     const formData = new FormData()
     formData.append('name', addCatName.value)
     formData.append('description', addCatDesc.value)
+    formData.append('restaurant', String(restaurantId.value))
     if (addCatPhotoFile.value) formData.append('photo', addCatPhotoFile.value)
     await apiFetch('/api/owner/categories/', {
       method: 'POST',
@@ -172,14 +154,7 @@ async function submitAddCategory() {
 }
 
 onMounted(async () => {
-  try {
-    const res = await apiFetch('/api/admin/restaurants/')
-    restaurants.value = Array.isArray(res) ? res : (res.results || [])
-  } catch (e: any) {
-    error.value = e?.message || 'Ошибка загрузки'
-  } finally {
-    loading.value = false
-  }
+  await fetchRestaurantId()
   await fetchCategories()
 })
 </script>
@@ -190,7 +165,7 @@ onMounted(async () => {
   border-radius: 24px;
   box-shadow: 0 4px 32px #1a9c6b11;
   padding: 32px 24px 28px 24px;
-  max-width: 900px;
+  max-width: 700px;
   margin: 48px auto 0 auto;
 }
 .admin-title {
@@ -211,58 +186,25 @@ onMounted(async () => {
   font-size: 1.1rem;
   margin: 24px 0;
 }
-.restaurant-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-.restaurant-item {
-  background: #f8fafd;
-  border-radius: 14px;
-  box-shadow: 0 2px 12px #1a9c6b11;
-  padding: 18px 16px;
-  text-align: left;
-  margin-bottom: 8px;
-}
-.restaurant-name {
-  font-size: 1.18rem;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.restaurant-address {
-  color: #888;
-  font-size: 1rem;
-}
-.category-form {
-  display: flex;
-  gap: 10px;
+.add-category-btn {
+  display: inline-block;
   margin-bottom: 18px;
-  justify-content: center;
-}
-.category-form input {
-  font-size: 1.08rem;
-  padding: 8px 14px;
-  border-radius: 8px;
-  border: 1.5px solid #e6eaf0;
-  background: #f6f8fa;
-  outline: none;
-}
-.category-form button {
-  font-size: 1.08rem;
-  padding: 8px 18px;
-  border-radius: 8px;
-  background: #1a9c6b;
+  background: linear-gradient(90deg, #1a9c6b 60%, #4fd1c5 100%);
   color: #fff;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-size: 1.08rem;
+  box-shadow: 0 2px 12px #1a9c6b22;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
   border: none;
-  font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
 }
-.category-form button:active {
+.add-category-btn:active, .add-category-btn:hover {
   background: #178a5c;
+  box-shadow: 0 4px 18px #1a9c6b22;
+  transform: scale(1.04);
 }
 .category-list {
   list-style: none;
@@ -296,26 +238,6 @@ onMounted(async () => {
 .category-item button:active, .category-item button:disabled {
   background: #c0392b;
   opacity: 0.7;
-}
-.add-category-btn {
-  display: inline-block;
-  margin-bottom: 18px;
-  background: linear-gradient(90deg, #1a9c6b 60%, #4fd1c5 100%);
-  color: #fff;
-  font-weight: 700;
-  padding: 10px 24px;
-  border-radius: 12px;
-  text-decoration: none;
-  font-size: 1.08rem;
-  box-shadow: 0 2px 12px #1a9c6b22;
-  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
-  border: none;
-  cursor: pointer;
-}
-.add-category-btn:active, .add-category-btn:hover {
-  background: #178a5c;
-  box-shadow: 0 4px 18px #1a9c6b22;
-  transform: scale(1.04);
 }
 .modal-overlay {
   position: fixed;
@@ -447,55 +369,105 @@ onMounted(async () => {
   font-size: 1.1rem;
   margin-top: 18px;
 }
-@media (max-width: 700px) {
-  .modern-admin-bg {
-    max-width: 99vw;
-    padding: 10px 1vw 10px 1vw;
-    border-radius: 14px;
-    margin-top: 12px;
-  }
-  .admin-title {
-    font-size: 1.15rem;
-    margin-bottom: 10px;
-  }
-  .restaurant-item {
-    padding: 10px 8px;
-    border-radius: 8px;
-  }
-  .category-form input {
-    font-size: 0.95rem;
-    padding: 6px 8px;
-    border-radius: 6px;
-  }
-  .category-form button {
-    font-size: 0.95rem;
-    padding: 6px 10px;
-    border-radius: 6px;
-  }
-  .category-item {
-    padding: 6px 10px;
-    border-radius: 6px;
-    gap: 8px;
-  }
+.accent-btn {
+  background: linear-gradient(90deg, #1a9c6b 60%, #4fd1c5 100%) !important;
+  color: #fff !important;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 0;
+  font-size: 1.12rem;
+  box-shadow: 0 2px 12px #1a9c6b22;
+  width: 100%;
+  margin-bottom: 22px;
+  text-align: center;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
 }
-@media (max-width: 400px) {
-  .modern-admin-bg {
-    padding: 4px 2px 4px 2px;
-    border-radius: 8px;
-  }
-  .restaurant-item, .category-item {
-    padding: 4px 2px;
-    border-radius: 4px;
-  }
+.accent-btn:hover, .accent-btn:active {
+  background: #178a5c !important;
+  box-shadow: 0 4px 18px #1a9c6b22;
+  transform: scale(1.04);
 }
-@media (max-width: 318px) {
-  .modern-admin-bg {
-    padding: 2px 1px 2px 1px;
-    border-radius: 4px;
-  }
-  .restaurant-item, .category-item {
-    padding: 2px 1px;
-    border-radius: 2px;
-  }
+.modern-card {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 2px 12px #1a9c6b11;
+  padding: 22px 16px 16px 16px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 210px;
+  max-width: 420px;
+  width: 100%;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  transition: box-shadow 0.2s, transform 0.15s;
 }
-</style>
+.modern-card:hover {
+  box-shadow: 0 6px 24px #1a9c6b22;
+  transform: translateY(-2px) scale(1.03);
+}
+.category-name {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: #1a9c6b;
+}
+.modern-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 22px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 4px 6px 0 0;
+  box-shadow: 0 2px 8px #1a9c6b11;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.13s;
+}
+.modern-btn.delete {
+  background: #E74C3C;
+  color: #fff;
+}
+.modern-btn.delete:hover {
+  background: #F39C12;
+  color: #fff;
+}
+.modern-btn.cancel {
+  background: #bbb;
+  color: #fff;
+}
+.modern-btn.save {
+  background: #1a9c6b;
+  color: #fff;
+}
+.modern-btn.save:hover {
+  background: #4fd1c5;
+  color: #fff;
+}
+.modern-modal {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 4px 32px #1a9c6b22;
+  padding: 36px 24px 32px 24px;
+  max-width: 420px;
+  margin: 48px auto 0 auto;
+}
+.modern-form input,
+.modern-form select,
+.modern-form textarea {
+  font-size: 1.08rem;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1.5px solid #e6eaf0;
+  background: #f6f8fa;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 6px #1a9c6b11;
+  margin-bottom: 12px;
+}
+.modern-form input:focus,
+.modern-form select:focus,
+.modern-form textarea:focus {
+  border: 1.5px solid #1a9c6b;
+  box-shadow: 0 2px 12px #1a9c6b22;
+}
+</style> 

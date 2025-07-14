@@ -1,13 +1,15 @@
-<template>
+.admin-main<template>
   <div class="admin-layout">
     <button class="sidebar-toggle" @click="sidebarOpen = true" v-if="isMobile && !sidebarOpen">☰</button>
     <div v-if="sidebarOpen && isMobile" class="sidebar-overlay" @click="sidebarOpen = false"></div>
     <aside class="admin-sidebar" :class="{ open: sidebarOpen || !isMobile }">
       <div class="sidebar-title">Admin</div>
-      <NuxtLink to="/admin/dashboard" active-class="active"><span>🏠</span> Дашборд</NuxtLink>
-      <NuxtLink to="/admin/menu" active-class="active"><span>📋</span> Меню</NuxtLink>
-      <NuxtLink to="/admin/add-dish" active-class="active"><span>➕</span> Добавить блюдо</NuxtLink>
-      <NuxtLink to="/admin/orders" active-class="active"><span>🛒</span> Заказы</NuxtLink>
+      <NuxtLink to="/admin/dashboard" active-class="active" @click="handleSidebarLinkClick"><span>🏠</span> Дашборд</NuxtLink>
+      <NuxtLink to="/admin/menu" active-class="active" @click="handleSidebarLinkClick"><span>📋</span> Меню</NuxtLink>
+      <NuxtLink to="/admin/categories" active-class="active" @click="handleSidebarLinkClick"><span>📂</span> Категории</NuxtLink>
+      <NuxtLink to="/admin/add-dish" active-class="active" @click="handleSidebarLinkClick"><span>➕</span> Добавить блюдо</NuxtLink>
+      <NuxtLink to="/admin/orders" active-class="active" @click="handleSidebarLinkClick"><span>🛒</span> Заказы</NuxtLink>
+      <NuxtLink v-if="restaurantSlug" :to="`/menu/${restaurantSlug}`" target="_blank" @click="handleSidebarLinkClick"><span>🌐</span> Мой ресторан (публично)</NuxtLink>
       <button class="admin-logout" @click="logout"><span>🚪</span> Выйти</button>
       <button v-if="isMobile" class="sidebar-close" @click="sidebarOpen = false">✕</button>
     </aside>
@@ -19,10 +21,31 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
-import { onMounted, ref, computed, onBeforeUnmount } from 'vue'
-const router = useRouter()
+import { onMounted, ref, onBeforeUnmount } from 'vue'
+import { useAuthStore } from '@/stores/authStore'
+import { apiFetch } from '@/utils/api'
+// JWT decode helper
+function parseJwt (token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1]))
+  } catch (e) {
+    return null
+  }
+}
+const auth = useAuthStore()
+const restaurantSlug = ref(null)
+// Получаем slug через /api/owner/info/
+onMounted(async () => {
+  if (auth.access) {
+    try {
+      const res = await apiFetch('/api/owner/info/')
+      restaurantSlug.value = res?.slug || null
+    } catch {}
+  }
+})
 function logout() {
   localStorage.removeItem('admin_auth')
+  auth.logout()
   router.push('/login')
 }
 onMounted(() => {
@@ -43,19 +66,22 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
 })
+function handleSidebarLinkClick() {
+  if (isMobile.value) sidebarOpen.value = false;
+}
 </script>
 
 <style scoped>
 .admin-layout {
   min-height: 100vh;
-  background: #faf8f6;
+  background: #f8fafd;
   display: flex;
 }
 .admin-sidebar {
-  width: 280px;
+  width: 250px;
   background: #fff;
-  border-right: 1.5px solid #f0ece8;
-  box-shadow: 2px 0 12px #0001;
+  border-right: 1.5px solid #e6eaf0;
+  box-shadow: 2px 0 16px #1a9c6b11;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -66,30 +92,31 @@ onBeforeUnmount(() => {
   left: 0;
   bottom: 0;
   z-index: 1100;
+  border-radius: 0 24px 24px 0;
   transition: transform 0.25s cubic-bezier(.4,0,.2,1);
 }
 .sidebar-title {
   font-size: 1.3rem;
   font-weight: bold;
-  color: #F39C12;
+  color: #1a9c6b;
   text-align: center;
   margin-bottom: 32px;
   letter-spacing: 1px;
 }
 .admin-sidebar a {
-  color: #F39C12;
+  color: #1a9c6b;
   font-weight: bold;
   text-decoration: none;
   font-size: 1.08rem;
-  padding: 12px 28px;
+  padding: 14px 28px;
   border-radius: 0 18px 18px 0;
   transition: background 0.2s, color 0.2s;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 .admin-sidebar a.active, .admin-sidebar a.router-link-exact-active {
-  background: #F39C12;
+  background: #1a9c6b;
   color: #fff;
 }
 .admin-logout {
@@ -98,7 +125,7 @@ onBeforeUnmount(() => {
   color: #fff;
   border: none;
   border-radius: 8px;
-  padding: 10px 0;
+  padding: 12px 0;
   font-size: 1.08rem;
   font-weight: bold;
   cursor: pointer;
@@ -113,10 +140,10 @@ onBeforeUnmount(() => {
 }
 .admin-main {
   margin: 0 auto;
-  padding: 15px;
   width: 100%;
   flex: 1;
   min-height: 100vh;
+  background: #fff;
 }
 .sidebar-toggle {
   display: none;
@@ -126,7 +153,8 @@ onBeforeUnmount(() => {
   top: 12px;
   right: 12px;
   background: none;
-  color: #E74C3C;
+  color: #1a9c6b;
+  padding: none!important;
   font-size: 1.5rem;
   border: none;
   cursor: pointer;
@@ -146,6 +174,7 @@ onBeforeUnmount(() => {
   .admin-sidebar {
     transform: translateX(-100%);
     padding: 18px 0 0 0;
+    border-radius: 0 18px 18px 0;
   }
   .admin-sidebar.open {
     transform: translateX(0);
@@ -163,7 +192,7 @@ onBeforeUnmount(() => {
     line-height: 21px;
     padding: 12px;
     box-shadow: 0 2px 12px #0001;
-    color: #F39C12;
+    color: #1a9c6b;
     cursor: pointer;
   }
 }

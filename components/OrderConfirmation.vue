@@ -22,8 +22,8 @@ import { useI18n } from 'vue-i18n'
 const { t } = useI18n()
 const router = useRouter()
 // Здесь можно получить данные заказа из стора или query/params
-const name = 'Гость'
-const table = '1'
+const name = localStorage.getItem('order_guest_name') || ''
+const table = localStorage.getItem('order_table_number') || ''
 const cart = [
   { id: 1, name: t('margarita'), qty: 2 },
   { id: 2, name: t('light_beer'), qty: 1 },

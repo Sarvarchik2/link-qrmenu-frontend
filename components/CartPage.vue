@@ -39,10 +39,40 @@ const cart = useCartStore()
 const name = ref('')
 const table = ref('')
 const router = useRouter()
-function submitOrder() {
-  // Здесь можно добавить отправку заказа на сервер
-  cart.clear()
-  router.push('/order-confirmation')
+const BASE_URL = 'http://127.0.0.1:8000'
+
+async function submitOrder() {
+  const restaurantId = localStorage.getItem('cart_restaurant_id')
+  const slug = localStorage.getItem('cart_restaurant_slug')
+  const payload = {
+    restaurant: restaurantId ? Number(restaurantId) : undefined,
+    guest_name: name.value,
+    table_number: table.value,
+    items: cart.items.map(i => ({ menu_item_id: i.id, quantity: i.qty }))
+  }
+  console.log('Order payload:', payload)
+  if (!restaurantId || !slug) {
+    alert('Ошибка: не найден restaurantId или slug!')
+    return
+  }
+  try {
+    localStorage.setItem('order_guest_name', name.value)
+    localStorage.setItem('order_table_number', table.value)
+    const res = await fetch(`${BASE_URL}/api/${slug}/order/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+    if (!res.ok) {
+      const err = await res.text()
+      alert('Ошибка оформления заказа: ' + err)
+      return
+    }
+    cart.clear()
+    router.push('/order-confirmation')
+  } catch (e) {
+    alert('Ошибка отправки заказа: ' + (e?.message || e))
+  }
 }
 </script>
 

@@ -1,12 +1,12 @@
 <template>
-  <div class="admin-menu">
+  <div class="admin-menu modern-admin-bg">
     <h1 class="admin-title">Меню ресторана</h1>
-    <NuxtLink to="/admin/add-dish" class="add-dish-btn">+ Добавить блюдо</NuxtLink>
+    <NuxtLink to="/admin/add-dish" class="add-dish-btn accent-btn">➕ Добавить блюдо</NuxtLink>
     <div v-if="loading" class="admin-loading">Загрузка...</div>
     <div v-else-if="error" class="admin-error">Ошибка: {{ error }}</div>
     <div class="dish-list">
-      <div v-for="dish in dishes" :key="dish.id" class="dish-card">
-        <img :src="dish.photo || 'https://via.placeholder.com/54x54?text=No+Image'" class="dish-img" />
+      <div v-for="dish in dishes" :key="dish.id" class="dish-card modern-card">
+        <img :src="dish.photo && dish.photo.startsWith('/') ? 'http://127.0.0.1:8000' + dish.photo : (dish.photo || 'https://via.placeholder.com/54x54?text=No+Image')" class="dish-img" />
         <div class="dish-info">
           <div class="dish-title">{{ dish.name }}</div>
           <div class="dish-meta">{{ dish.price }} сум</div>
@@ -16,18 +16,59 @@
             <span v-if="dish.is_vegetarian" class="flag veg">Вег</span>
           </div>
         </div>
-        <button class="dish-delete" @click="deleteDish(dish.id)" :disabled="deletingId === dish.id">
-          <span v-if="deletingId === dish.id">...</span>
-          <span v-else>Удалить</span>
-        </button>
+        <div class="dish-actions">
+          <button class="modern-btn edit" @click="openEditModal(dish)">Изменить</button>
+          <button class="modern-btn delete" @click="deleteDish(dish.id)" :disabled="deletingId === dish.id">
+            <span v-if="deletingId === dish.id">...</span>
+            <span v-else>Удалить</span>
+          </button>
+        </div>
       </div>
     </div>
     <div v-if="deleteError" class="admin-error">Ошибка удаления: {{ deleteError }}</div>
+
+    <!-- Модальное окно для редактирования блюда -->
+    <div v-if="editModalOpen" class="modal-overlay" @click.self="closeEditModal">
+      <div class="modal-content modern-modal">
+        <h2 class="modal-title">Изменить блюдо</h2>
+        <form class="edit-dish-form modern-form" @submit.prevent="saveEditDish" enctype="multipart/form-data">
+          <input v-model="editDishData.name" type="text" placeholder="Название блюда" required />
+          <textarea v-model="editDishData.description" placeholder="Описание блюда"></textarea>
+          <input v-model="editDishData.price" type="text" placeholder="Цена (например: 1500.00)" required />
+          <div class="checkboxes">
+            <label>
+              <input v-model="editDishData.is_hit" type="checkbox" />
+              Хит продаж
+            </label>
+            <label>
+              <input v-model="editDishData.is_vegetarian" type="checkbox" />
+              Вегетарианское
+            </label>
+          </div>
+          <div class="photo-upload-block">
+            <label class="photo-label">Фото блюда</label>
+            <div class="photo-dropzone" @dragover.prevent @drop.prevent="onEditDrop" @click="openEditFileDialog">
+              <input ref="editFileInput" type="file" accept="image/*" style="display:none" @change="onEditFileChange" />
+              <img v-if="editPhotoPreview" :src="editPhotoPreview" class="photo-preview" />
+              <div v-else class="photo-placeholder">
+                <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">Фото</text></svg>
+                <div class="photo-text">Перетащите фото или нажмите</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="modern-btn cancel" @click="closeEditModal">Отмена</button>
+            <button type="submit" class="modern-btn save" :disabled="editLoading">Сохранить</button>
+          </div>
+        </form>
+        <div v-if="editError" class="add-dish-error">Ошибка: {{ editError }}</div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { apiFetch } from '@/utils/api'
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 const dishes = ref<any[]>([])
@@ -60,47 +101,106 @@ async function deleteDish(id: number) {
     deletingId.value = null
   }
 }
+const editModalOpen = ref(false)
+const editDishData = ref<any>({})
+const editPhotoFile = ref<File|null>(null)
+const editPhotoPreview = ref<string|null>(null)
+const editLoading = ref(false)
+const editError = ref('')
+const editFileInput = ref<HTMLInputElement|null>(null)
+function openEditModal(dish: any) {
+  editDishData.value = { ...dish }
+  editPhotoFile.value = null
+  editPhotoPreview.value = dish.photo && dish.photo.startsWith('/') ? 'http://127.0.0.1:8000' + dish.photo : dish.photo || null
+  editModalOpen.value = true
+}
+function closeEditModal() {
+  editModalOpen.value = false
+  editDishData.value = {}
+  editPhotoFile.value = null
+  editPhotoPreview.value = null
+  editError.value = ''
+}
+function onEditFileChange(e: Event) {
+  const files = (e.target as HTMLInputElement).files
+  if (files && files[0]) {
+    editPhotoFile.value = files[0]
+    editPhotoPreview.value = URL.createObjectURL(files[0])
+  }
+}
+function onEditDrop(e: DragEvent) {
+  const files = e.dataTransfer?.files
+  if (files && files[0]) {
+    editPhotoFile.value = files[0]
+    editPhotoPreview.value = URL.createObjectURL(files[0])
+  }
+}
+function openEditFileDialog() {
+  editFileInput.value?.click()
+}
+async function saveEditDish() {
+  editError.value = ''
+  editLoading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('name', editDishData.value.name)
+    formData.append('description', editDishData.value.description)
+    formData.append('price', editDishData.value.price)
+    formData.append('is_hit', editDishData.value.is_hit ? 'true' : 'false')
+    formData.append('is_vegetarian', editDishData.value.is_vegetarian ? 'true' : 'false')
+    if (editPhotoFile.value) formData.append('photo', editPhotoFile.value)
+    await apiFetch(`/api/owner/items/${editDishData.value.id}/`, {
+      method: 'PATCH',
+      body: formData
+    })
+    closeEditModal()
+    await fetchDishes()
+  } catch (e: any) {
+    editError.value = e?.message || 'Ошибка сохранения'
+  } finally {
+    editLoading.value = false
+  }
+}
 </script>
 
 <style scoped>
 * {
   box-sizing: border-box;
 }
-.admin-menu {
-  max-width: 700px;
-  margin: 0 auto;
-  background: var(--oddmenu-card-bg);
-  border-radius: var(--oddmenu-radius);
-  box-shadow: var(--oddmenu-shadow);
-  padding: 32px 12px 28px 12px;
-  transition: box-shadow 0.2s;
-}
-.admin-menu:hover {
-  box-shadow: var(--oddmenu-shadow-hover);
+.modern-admin-bg {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 32px #1a9c6b11;
+  padding: 32px 24px 28px 24px;
+  max-width: 900px;
+  margin: 48px auto 0 auto;
 }
 .admin-title {
   font-size: 2.1rem;
   font-weight: 800;
-  margin-bottom: 24px;
-  color: var(--oddmenu-orange);
+  margin-bottom: 32px;
+  color: #1a9c6b;
+  text-align: center;
   letter-spacing: 1px;
 }
 .add-dish-btn {
   display: inline-block;
   margin-bottom: 22px;
-  background: linear-gradient(90deg, var(--oddmenu-orange) 60%, #f7b731 100%);
+  background: linear-gradient(90deg, #1a9c6b 60%, #4fd1c5 100%);
   color: #fff;
   font-weight: 700;
-  padding: 10px 22px;
+  padding: 12px 28px;
   border-radius: 14px;
   text-decoration: none;
   font-size: 1.08rem;
-  box-shadow: 0 2px 12px #F39C1240;
+  box-shadow: 0 2px 12px #1a9c6b22;
   transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  width: 100%;
+  text-align: center;
 }
 .add-dish-btn:active, .add-dish-btn:hover {
-  background: var(--oddmenu-red);
-  box-shadow: 0 4px 18px #F39C1240;
+  background: #178a5c;
+  box-shadow: 0 4px 18px #1a9c6b22;
   transform: scale(1.04);
 }
 .dish-list {
@@ -110,9 +210,9 @@ async function deleteDish(id: number) {
   justify-content: center;
 }
 .dish-card {
-  background: linear-gradient(135deg, #fffbe6 60%, #f9e7c4 100%);
+  background: #f8fafd;
   border-radius: 18px;
-  box-shadow: 0 2px 12px #F39C1240;
+  box-shadow: 0 2px 12px #1a9c6b11;
   padding: 16px 12px 12px 12px;
   display: flex;
   align-items: center;
@@ -121,9 +221,15 @@ async function deleteDish(id: number) {
   max-width: 320px;
   flex: 1 1 210px;
   transition: box-shadow 0.2s, transform 0.15s;
+  position: relative;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  background: #fff;
+  border-radius: 30px;
 }
 .dish-card:hover {
-  box-shadow: 0 6px 24px #F39C1240;
+  box-shadow: 0 6px 24px #1a9c6b22;
   transform: translateY(-2px) scale(1.03);
 }
 .dish-img {
@@ -159,7 +265,7 @@ async function deleteDish(id: number) {
   font-weight: bold;
 }
 .flag.hit {
-  background: #F39C12;
+  background: #1a9c6b;
   color: #fff;
 }
 .flag.veg {
@@ -182,11 +288,272 @@ async function deleteDish(id: number) {
   background: #c0392b;
   opacity: 0.7;
 }
-@media (max-width: 500px) {
-  .admin-menu {
+.dish-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+.dish-edit {
+  background: #1a9c6b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.98rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dish-edit:active, .dish-edit:hover {
+  background: #178a5c;
+}
+/* Модальное окно */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.18);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px #1a9c6b22;
+  padding: 32px 24px 24px 24px;
+  min-width: 320px;
+  max-width: 98vw;
+}
+.modal-title {
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #1a9c6b;
+  margin-bottom: 18px;
+  text-align: center;
+}
+.edit-dish-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.edit-dish-form input,
+.edit-dish-form textarea {
+  font-size: 1.08rem;
+  padding: 14px 18px;
+  border-radius: 14px;
+  border: 1.5px solid #e6eaf0;
+  background: #f6f8fa;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 6px #1a9c6b11;
+}
+.edit-dish-form input:focus,
+.edit-dish-form textarea:focus {
+  border: 1.5px solid #1a9c6b;
+  box-shadow: 0 2px 12px #1a9c6b22;
+}
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+.modal-cancel {
+  background: #eee;
+  color: #888;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.98rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal-cancel:active, .modal-cancel:hover {
+  background: #e6eaf0;
+}
+.modal-save {
+  background: #1a9c6b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 0.98rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.modal-save:active, .modal-save:hover {
+  background: #178a5c;
+}
+.photo-upload-block {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.photo-label {
+  font-size: 0.98rem;
+  color: #555;
+  font-weight: 600;
+}
+.photo-dropzone {
+  border: 2px dashed #ccc;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border 0.2s;
+  background: #f5f5f5;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+.photo-dropzone:hover {
+  border-color: #1a9c6b;
+}
+.photo-dropzone.dragover {
+  border-color: #1a9c6b;
+  background: #e0f7fa;
+}
+.photo-preview {
+  max-width: 100%;
+  max-height: 150px;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px #0001;
+}
+.photo-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #bbb;
+  font-size: 1rem;
+}
+.photo-text {
+  margin-top: 10px;
+  font-size: 0.9rem;
+  color: #888;
+}
+.add-dish-error {
+  color: #E74C3C;
+  font-size: 0.9rem;
+  margin-top: 10px;
+  text-align: center;
+}
+.accent-btn {
+  background: linear-gradient(90deg, #1a9c6b 60%, #4fd1c5 100%) !important;
+  color: #fff !important;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 0;
+  font-size: 1.12rem;
+  box-shadow: 0 2px 12px #1a9c6b22;
+  width: 100%;
+  margin-bottom: 22px;
+  text-align: center;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.accent-btn:hover, .accent-btn:active {
+  background: #178a5c !important;
+  box-shadow: 0 4px 18px #1a9c6b22;
+  transform: scale(1.04);
+}
+.modern-card {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 2px 12px #1a9c6b11;
+  padding: 22px 16px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  min-width: 210px;
+  max-width: 320px;
+  flex: 1 1 210px;
+  margin-bottom: 8px;
+  transition: box-shadow 0.2s, transform 0.15s;
+}
+.modern-card:hover {
+  box-shadow: 0 6px 24px #1a9c6b22;
+  transform: translateY(-2px) scale(1.03);
+}
+.modern-btn {
+  border: none;
+  border-radius: 14px;
+  padding: 10px 22px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin: 4px 6px 0 0;
+  box-shadow: 0 2px 8px #1a9c6b11;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, transform 0.13s;
+}
+.modern-btn.edit {
+  background: #1a9c6b;
+  color: #fff;
+}
+.modern-btn.edit:hover {
+  background: #4fd1c5;
+  color: #fff;
+}
+.modern-btn.delete {
+  background: #E74C3C;
+  color: #fff;
+}
+.modern-btn.delete:hover {
+  background: #F39C12;
+  color: #fff;
+}
+.modern-btn.cancel {
+  background: #bbb;
+  color: #fff;
+}
+.modern-btn.save {
+  background: #1a9c6b;
+  color: #fff;
+}
+.modern-btn.save:hover {
+  background: #4fd1c5;
+  color: #fff;
+}
+.modern-modal {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 4px 32px #1a9c6b22;
+  padding: 36px 24px 32px 24px;
+  max-width: 420px;
+  margin: 48px auto 0 auto;
+}
+.modern-form input,
+.modern-form select,
+.modern-form textarea {
+  font-size: 1.08rem;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1.5px solid #e6eaf0;
+  background: #f6f8fa;
+  outline: none;
+  transition: border 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 6px #1a9c6b11;
+  margin-bottom: 12px;
+}
+.modern-form input:focus,
+.modern-form select:focus,
+.modern-form textarea:focus {
+  border: 1.5px solid #1a9c6b;
+  box-shadow: 0 2px 12px #1a9c6b22;
+}
+@media (max-width: 700px) {
+  .modern-admin-bg {
     max-width: 99vw;
     padding: 10px 1vw 10px 1vw;
     border-radius: 14px;
+    margin-top: 12px;
   }
   .admin-title {
     font-size: 1.15rem;
@@ -219,6 +586,70 @@ async function deleteDish(id: number) {
   }
   .dish-meta {
     font-size: 0.85rem;
+  }
+}
+@media (max-width: 400px) {
+  .modern-admin-bg {
+    padding: 4px 2px 4px 2px;
+    border-radius: 8px;
+  }
+  .dish-card {
+    padding: 4px 2px 4px 2px;
+    border-radius: 6px;
+  }
+  .add-dish-btn {
+    padding: 6px 6px;
+    font-size: 0.85rem;
+  }
+}
+@media (max-width: 318px) {
+  .modern-admin-bg {
+    padding: 2px 1px 2px 1px;
+    border-radius: 4px;
+  }
+  .dish-card {
+    padding: 2px 1px 2px 1px;
+    border-radius: 4px;
+  }
+  .add-dish-btn {
+    padding: 4px 2px;
+    font-size: 0.7rem;
+  }
+}
+@media (max-width: 500px) {
+  .modal-content {
+    padding: 10px 2vw 10px 2vw;
+    min-width: 0;
+  }
+  .modal-title {
+    font-size: 1.05rem;
+  }
+  .edit-dish-form input,
+  .edit-dish-form textarea {
+    font-size: 0.95rem;
+    padding: 8px 8px;
+    border-radius: 8px;
+  }
+  .modal-actions button {
+    font-size: 0.95rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+}
+@media (max-width: 318px) {
+  .modal-content {
+    padding: 2px 1px 2px 1px;
+    border-radius: 4px;
+  }
+  .edit-dish-form input,
+  .edit-dish-form textarea {
+    padding: 2px 1px;
+    border-radius: 3px;
+  }
+  .modal-actions button {
+    padding: 4px 2px;
+    font-size: 0.7rem;
+    border-radius: 3px;
   }
 }
 </style> 

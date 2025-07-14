@@ -6,6 +6,7 @@
       <div v-if="loading" class="menu-loading">Загрузка...</div>
       <div v-else-if="error" class="menu-error">Ошибка: {{ error }}</div>
       <div v-else>
+        
         <div v-if="!categories.length">Меню пусто</div>
         <div v-else>
           <div v-if="!selectedCategory">
@@ -91,16 +92,20 @@ async function sendOrder() {
   orderError.value = ''
   orderLoading.value = true
   try {
-    await apiFetch(`/api/${slug}/order/`, {
+    // Debug info
+    const payload = {
+      restaurant: restaurant.value?.id,
+      guest_name: guestName.value,
+      table_number: tableNumber.value,
+      items: cart.value.map(i => ({ menu_item: i.id, quantity: i.qty }))
+    }
+    
+    const res = await apiFetch(`/api/${slug}/order/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        restaurant: 1, // Нужно получить ID ресторана
-        guest_name: guestName.value,
-        table_number: tableNumber.value,
-        items: cart.value.map(i => ({ menu_item: i.id, quantity: i.qty }))
-      })
+      body: JSON.stringify(payload)
     }, false)
+    console.log('Order response:', res)
     orderSuccess.value = true
     cart.value = []
     guestName.value = ''
@@ -108,6 +113,7 @@ async function sendOrder() {
     setTimeout(() => orderSuccess.value = false, 3000)
   } catch (e: any) {
     orderError.value = e?.message || 'Ошибка отправки заказа'
+    console.error('Order error:', e)
   } finally {
     orderLoading.value = false
   }
@@ -135,6 +141,11 @@ onMounted(async () => {
     }
     // Ресторан теперь приходит в res.restaurant
     restaurant.value = res.restaurant || null
+    // Сохраняем restaurant.id и slug в localStorage для корзины
+    if (restaurant.value?.id && slug) {
+      localStorage.setItem('cart_restaurant_id', String(restaurant.value.id))
+      localStorage.setItem('cart_restaurant_slug', String(slug))
+    }
   } catch (e: any) {
     error.value = e?.message || 'Ошибка загрузки меню'
   } finally {
