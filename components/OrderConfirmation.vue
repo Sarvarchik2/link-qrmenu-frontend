@@ -24,12 +24,14 @@ const router = useRouter()
 // Здесь можно получить данные заказа из стора или query/params
 const name = localStorage.getItem('order_guest_name') || ''
 const table = localStorage.getItem('order_table_number') || ''
-const cart = [
-  { id: 1, name: t('margarita'), qty: 2 },
-  { id: 2, name: t('light_beer'), qty: 1 },
-]
+const cart = JSON.parse(localStorage.getItem('order_cart') || '[]')
+const restaurantSlug = localStorage.getItem('order_restaurant_slug') || ''
 function goToMenu() {
-  router.push('/')
+  if (restaurantSlug) {
+    router.push(`/menu/${restaurantSlug}`)
+  } else {
+    router.push('/')
+  }
 }
 </script>
 

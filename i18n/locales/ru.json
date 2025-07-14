@@ -222,6 +222,12 @@
     },
     "restaurant": {
       "title": "Ресторан"
+    },
+    "login": {
+      "title": "Вход в админку",
+      "loginButton": "Войти"
     }
-  }
+  },
+  "login.title": "Вход в админку",
+  "login.loginButton": "Войти"
 } 

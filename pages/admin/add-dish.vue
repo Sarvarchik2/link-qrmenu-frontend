@@ -84,7 +84,7 @@ async function addDish() {
   loading.value = true
   try {
     const formData = new FormData()
-    formData.append('category', category.value)
+    formData.append('category', String(Number(category.value))) // строго число-строка
     formData.append('name', name.value)
     formData.append('description', description.value)
     formData.append('price', price.value)
@@ -106,7 +106,17 @@ async function addDish() {
     success.value = true
     setTimeout(() => success.value = false, 2000)
   } catch (e: any) {
-    error.value = e?.message || t('admin.addDish.addError')
+    // Пытаемся получить подробную ошибку из тела ответа
+    if (e && e.message && e.message.startsWith('{')) {
+      try {
+        const errObj = JSON.parse(e.message)
+        error.value = JSON.stringify(errObj)
+      } catch {
+        error.value = e.message || t('admin.addDish.addError')
+      }
+    } else {
+      error.value = e?.message || t('admin.addDish.addError')
+    }
   } finally {
     loading.value = false
   }

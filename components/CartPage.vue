@@ -58,6 +58,8 @@ async function submitOrder() {
   try {
     localStorage.setItem('order_guest_name', name.value)
     localStorage.setItem('order_table_number', table.value)
+    localStorage.setItem('order_cart', JSON.stringify(cart.items))
+    localStorage.setItem('order_restaurant_slug', slug)
     const res = await fetch(`${BASE_URL}/api/${slug}/order/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

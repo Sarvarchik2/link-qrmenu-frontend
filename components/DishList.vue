@@ -6,11 +6,11 @@
         <div class="dish-info">
           <div class="flex" style="justify-content: space-between; align-items: flex-end;">
             <div>
-              <div class="dish-title">{{ t('dish.' + dish.name) }}</div>
+              <div class="dish-title">{{ dish.name }}</div>
               <div class="dish-meta">{{ dish.volume || '' }}</div>
             </div>
             <button class="dish-add" @click="addToCart(dish)" :class="{ bounce: bounceId === dish.id }">
-              <span>{{ t('dish.add_to_cart') }}</span>
+              <span>+</span>
             </button>
           </div>
           <div class="dish-price">{{ dish.price }} {{ t('sum') }}</div>

@@ -222,6 +222,12 @@
     },
     "restaurant": {
       "title": "Restoran"
+    },
+    "login": {
+      "title": "Admin paneliga kirish",
+      "loginButton": "Kirish"
     }
-  }
+  },
+  "login.title": "Admin paneliga kirish",
+  "login.loginButton": "Kirish"
 }

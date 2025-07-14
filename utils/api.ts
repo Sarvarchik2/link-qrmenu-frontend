@@ -26,6 +26,10 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}, auth
       throw new Error('Session expired. Please login again.');
     }
   }
-  if (!res.ok) throw new Error('API error');
+  if (!res.ok) {
+    // Пытаемся получить подробную ошибку из тела ответа
+    let errorText = await res.text();
+    throw new Error(errorText || 'API error');
+  }
   return res.json();
 } 
