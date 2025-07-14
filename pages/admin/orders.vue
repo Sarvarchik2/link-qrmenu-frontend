@@ -1,29 +1,29 @@
 <template>
   <div class="admin-orders modern-admin-bg">
-    <h1 class="admin-title">Заказы</h1>
+    <h1 class="admin-title">{{ t('admin.orders.title') }}</h1>
     <div class="orders-filter-row">
-      <label for="statusFilter">Фильтр по статусу:</label>
+      <label for="statusFilter">{{ t('admin.orders.filter_by_status') }}:</label>
       <select id="statusFilter" v-model="statusFilter" class="modern-select">
-        <option value="">Все</option>
-        <option value="new">Новый</option>
-        <option value="in_progress">В работе</option>
-        <option value="done">Выполнен</option>
-        <option value="cancelled">Отменен</option>
+        <option value="">{{ t('admin.orders.all') }}</option>
+        <option value="new">{{ t('admin.orders.new') }}</option>
+        <option value="in_progress">{{ t('admin.orders.in_progress') }}</option>
+        <option value="done">{{ t('admin.orders.done') }}</option>
+        <option value="cancelled">{{ t('admin.orders.cancelled') }}</option>
       </select>
     </div>
-    <div v-if="loading" class="admin-loading">Загрузка...</div>
-    <div v-else-if="error" class="admin-error">Ошибка: {{ error }}</div>
+    <div v-if="loading" class="admin-loading">{{ $t('loading') }}...</div>
+    <div v-else-if="error" class="admin-error">{{ $t('error') }}: {{ error }}</div>
     <div class="order-list">
       <div v-for="order in filteredOrders" :key="order.id" class="order-card modern-card" :class="'status-'+order.status" @click="openOrderModal(order)">
-        <div class="order-id">Заказ #{{ order.id }}</div>
-        <div class="order-info">Имя: {{ order.guest_name }}, Стол: {{ order.table_number }}</div>
+        <div class="order-id">{{ t('admin.orders.order') }} #{{ order.id }}</div>
+        <div class="order-info">{{ t('admin.orders.name') }}: {{ order.guest_name }}, {{ t('admin.orders.table') }}: {{ order.table_number }}</div>
         <div class="order-status-row">
           <span class="order-status-label" :class="'status-label-'+order.status">{{ getStatusText(order.status) }}</span>
         </div>
-        <div class="order-date">Дата: {{ formatDate(order.created_at) }}</div>
+        <div class="order-date">{{ t('admin.orders.date') }}: {{ formatDate(order.created_at) }}</div>
         <div class="order-items">
           <div v-for="item in order.items" :key="item.id" class="order-item">
-            {{ item.menu_item?.name || 'Блюдо' }} × {{ item.quantity }}
+            {{ item.menu_item?.name || t('admin.orders.dish') }} × {{ item.quantity }}
           </div>
         </div>
       </div>
@@ -32,31 +32,31 @@
     <!-- Модалка заказа -->
     <div v-if="orderModalOpen" class="modal-overlay" @click.self="closeOrderModal">
       <div class="modal-content modern-modal">
-        <h2 class="modal-title">Заказ #{{ selectedOrder?.id }}</h2>
-        <div class="modal-row"><b>Имя:</b> {{ selectedOrder?.guest_name }}</div>
-        <div class="modal-row"><b>Стол:</b> {{ selectedOrder?.table_number }}</div>
-        <div class="modal-row"><b>Статус:</b>
+        <h2 class="modal-title">{{ t('admin.orders.order') }} #{{ selectedOrder?.id }}</h2>
+        <div class="modal-row"><b>{{ t('admin.orders.name') }}:</b> {{ selectedOrder?.guest_name }}</div>
+        <div class="modal-row"><b>{{ t('admin.orders.table') }}:</b> {{ selectedOrder?.table_number }}</div>
+        <div class="modal-row"><b>{{ t('admin.orders.status') }}:</b>
           <select v-model="orderStatus" :disabled="statusLoading" class="modern-select">
-            <option value="new">Новый</option>
-            <option value="in_progress">В работе</option>
-            <option value="done">Выполнен</option>
-            <option value="cancelled">Отменен</option>
+            <option value="new">{{ t('admin.orders.new') }}</option>
+            <option value="in_progress">{{ t('admin.orders.in_progress') }}</option>
+            <option value="done">{{ t('admin.orders.done') }}</option>
+            <option value="cancelled">{{ t('admin.orders.cancelled') }}</option>
           </select>
-          <button class="modern-btn save" @click="saveStatus" :disabled="statusLoading || !selectedOrder">Сохранить</button>
+          <button class="modern-btn save" @click="saveStatus" :disabled="statusLoading || !selectedOrder">{{ t('admin.orders.save') }}</button>
         </div>
-        <div class="modal-row"><b>Дата:</b> {{ formatDate(selectedOrder?.created_at) }}</div>
-        <div class="modal-row"><b>Блюда:</b>
+        <div class="modal-row"><b>{{ t('admin.orders.date') }}:</b> {{ formatDate(selectedOrder?.created_at) }}</div>
+        <div class="modal-row"><b>{{ t('admin.orders.dishes') }}:</b>
           <ul>
             <li v-for="item in selectedOrder?.items" :key="item.id">
-              {{ item.menu_item?.name || 'Блюдо' }} × {{ item.quantity }}
+              {{ item.menu_item?.name || t('admin.orders.dish') }} × {{ item.quantity }}
             </li>
           </ul>
         </div>
         <div class="modal-actions">
-          <button class="modern-btn cancel" @click="closeOrderModal">Закрыть</button>
-          <button class="modern-btn delete" @click="deleteOrder" :disabled="deleteLoading">Удалить</button>
+          <button class="modern-btn cancel" @click="closeOrderModal">{{ t('admin.orders.close') }}</button>
+          <button class="modern-btn delete" @click="deleteOrder" :disabled="deleteLoading">{{ t('admin.orders.delete') }}</button>
         </div>
-        <div v-if="modalError" class="add-dish-error">Ошибка: {{ modalError }}</div>
+        <div v-if="modalError" class="add-dish-error">{{ t('admin.orders.error') }}: {{ modalError }}</div>
       </div>
     </div>
   </div>
@@ -65,6 +65,8 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import { apiFetch } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 const orders = ref<any[]>([])
 const loading = ref(true)
@@ -80,10 +82,10 @@ onMounted(async () => {
 
 function getStatusText(status: string) {
   const statusMap: Record<string, string> = {
-    'new': 'Новый',
-    'in_progress': 'В работе',
-    'done': 'Выполнен',
-    'cancelled': 'Отменен'
+    'new': t('admin.orders.new'),
+    'in_progress': t('admin.orders.in_progress'),
+    'done': t('admin.orders.done'),
+    'cancelled': t('admin.orders.cancelled')
   }
   return statusMap[status] || status
 }
@@ -134,7 +136,7 @@ async function saveStatus() {
     await fetchOrders()
     closeOrderModal()
   } catch (e: any) {
-    modalError.value = e?.message || 'Ошибка смены статуса'
+    modalError.value = e?.message || t('status_change_error')
   } finally {
     statusLoading.value = false
   }
@@ -148,7 +150,7 @@ async function deleteOrder() {
     await fetchOrders()
     closeOrderModal()
   } catch (e: any) {
-    modalError.value = e?.message || 'Ошибка удаления'
+    modalError.value = e?.message || t('delete_error')
   } finally {
     deleteLoading.value = false
   }
@@ -160,7 +162,7 @@ async function fetchOrders() {
     const res = await apiFetch('/api/owner/orders/')
     orders.value = Array.isArray(res) ? res : (res.results || [])
   } catch (e: any) {
-    error.value = e?.message || 'Ошибка загрузки заказов'
+    error.value = e?.message || t('orders_load_error')
   } finally {
     loading.value = false
   }
@@ -173,7 +175,7 @@ onMounted(async () => {
     const res = await apiFetch('/api/owner/orders/')
     orders.value = Array.isArray(res) ? res : (res.results || [])
   } catch (e: any) {
-    error.value = e?.message || 'Ошибка загрузки заказов'
+    error.value = e?.message || t('orders_load_error')
   } finally {
     loading.value = false
   }

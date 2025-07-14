@@ -1,39 +1,39 @@
 <template>
   <div class="add-dish-wrap modern-admin-bg">
-    <h1 class="admin-title">Добавить блюдо</h1>
+    <h1 class="admin-title">{{ t('admin.addDish.title') }}</h1>
     <form class="add-dish-form modern-form" @submit.prevent="addDish" enctype="multipart/form-data">
       <select v-model="category" required>
-        <option value="">Выберите категорию</option>
+        <option value="">{{ t('admin.addDish.selectCategory') }}</option>
         <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
       </select>
-      <input v-model="name" type="text" placeholder="Название блюда" required />
-      <textarea v-model="description" placeholder="Описание блюда"></textarea>
-      <input v-model="price" type="text" placeholder="Цена (например: 1500.00)" required />
+      <input v-model="name" type="text" :placeholder="t('admin.addDish.dishName')" required />
+      <textarea v-model="description" :placeholder="t('admin.addDish.dishDescription')"></textarea>
+      <input v-model="price" type="text" :placeholder="t('admin.addDish.price')" required />
       <div class="checkboxes">
         <label>
           <input v-model="isHit" type="checkbox" />
-          Хит продаж
+          {{ t('admin.addDish.hitSales') }}
         </label>
         <label>
           <input v-model="isVegetarian" type="checkbox" />
-          Вегетарианское
+          {{ t('admin.addDish.vegetarian') }}
         </label>
       </div>
       <div class="photo-upload-block">
-        <label class="photo-label">Фото блюда</label>
+        <label class="photo-label">{{ t('admin.addDish.dishPhoto') }}</label>
         <div class="photo-dropzone" @dragover.prevent @drop.prevent="onDrop" @click="fileInput?.click()">
           <input ref="fileInput" type="file" accept="image/*" style="display:none" @change="onFileChange" />
           <img v-if="photoPreview" :src="photoPreview" class="photo-preview" />
           <div v-else class="photo-placeholder">
-            <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">Фото</text></svg>
-            <div class="photo-text">Перетащите фото или нажмите</div>
+            <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">{{ t('admin.addDish.photo') }}</text></svg>
+            <div class="photo-text">{{ t('admin.addDish.dragOrClickPhoto') }}</div>
           </div>
         </div>
       </div>
-      <button type="submit" class="accent-btn" :disabled="loading">Добавить</button>
+      <button type="submit" class="accent-btn" :disabled="loading">{{ t('admin.addDish.add') }}</button>
     </form>
-    <div v-if="success" class="add-dish-success">Блюдо добавлено!</div>
-    <div v-if="error" class="add-dish-error">Ошибка: {{ error }}</div>
+    <div v-if="success" class="add-dish-success">{{ t('admin.addDish.dishAdded') }}</div>
+    <div v-if="error" class="add-dish-error">{{ t('admin.addDish.error') }}: {{ error }}</div>
   </div>
 </template>
 
@@ -41,6 +41,8 @@
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 import { ref, onMounted } from 'vue'
 import { apiFetch } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 const name = ref('')
 const category = ref('')
 const description = ref('')
@@ -74,7 +76,7 @@ async function fetchCategories() {
     const res = await apiFetch('/api/owner/categories/')
     categories.value = Array.isArray(res) ? res : (res.results || [])
   } catch (e: any) {
-    error.value = e?.message || 'Ошибка загрузки категорий'
+    error.value = e?.message || t('admin.addDish.categoryLoadingError')
   }
 }
 async function addDish() {
@@ -104,7 +106,7 @@ async function addDish() {
     success.value = true
     setTimeout(() => success.value = false, 2000)
   } catch (e: any) {
-    error.value = e?.message || 'Ошибка добавления'
+    error.value = e?.message || t('admin.addDish.addError')
   } finally {
     loading.value = false
   }

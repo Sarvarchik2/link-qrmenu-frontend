@@ -1,17 +1,17 @@
 <template>
   <div class="restaurant-details">
-    <div v-if="loading" class="restaurant-loading">Загрузка...</div>
-    <div v-else-if="error" class="restaurant-error">Ошибка: {{ error }}</div>
+    <div v-if="loading" class="restaurant-loading">{{ t('loading') }}</div>
+    <div v-else-if="error" class="restaurant-error">{{ t('error') }}: {{ error }}</div>
     <div v-else-if="restaurant">
-      <h1 class="restaurant-title">{{ restaurant.name }}</h1>
+      <h1 class="restaurant-title">{{ t('admin.restaurant.title') }}: {{ restaurant.name }}</h1>
       <img v-if="restaurant.logo" :src="restaurant.logo" alt="Logo" class="restaurant-logo" />
       <div class="restaurant-info">
-        <p><b>Описание:</b> {{ restaurant.description }}</p>
-        <p><b>Контакты:</b> {{ restaurant.contacts }}</p>
-        <p><b>Адрес:</b> {{ restaurant.address }}</p>
-        <p><b>Slug:</b> {{ restaurant.slug }}</p>
-        <p><b>ID владельца:</b> {{ restaurant.owner }}</p>
-        <p><b>ID ресторана:</b> {{ restaurant.id }}</p>
+        <p><b>{{ t('description') }}:</b> {{ restaurant.description }}</p>
+        <p><b>{{ t('contacts') }}:</b> {{ restaurant.contacts }}</p>
+        <p><b>{{ t('address') }}:</b> {{ restaurant.address }}</p>
+        <p><b>{{ t('slug') }}:</b> {{ restaurant.slug }}</p>
+        <p><b>{{ t('owner_id') }}:</b> {{ restaurant.owner }}</p>
+        <p><b>{{ t('restaurant_id') }}:</b> {{ restaurant.id }}</p>
       </div>
     </div>
   </div>
@@ -21,6 +21,8 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { apiFetch } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 const route = useRoute()
 const id = route.params.id
 const restaurant = ref<any>(null)
@@ -30,7 +32,7 @@ onMounted(async () => {
   try {
     restaurant.value = await apiFetch(`/api/admin/restaurants/${id}/`)
   } catch (e: any) {
-    error.value = e?.message || 'Ошибка загрузки'
+    error.value = e?.message || t('error_loading')
   } finally {
     loading.value = false
   }

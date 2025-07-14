@@ -1,7 +1,7 @@
 <template>
   <section class="cart-wrap">
-    <h2 class="cart-title">{{ t('my_order') }}</h2>
-    <div v-if="cart.items.length === 0" class="cart-empty">{{ t('empty_cart') }}</div>
+    <h2 class="cart-title">{{ t('cart.my_order') }}</h2>
+    <div v-if="cart.items.length === 0" class="cart-empty">{{ t('cart.empty') }}</div>
     <div v-else>
       <div v-for="item in cart.items" :key="item.id" class="cart-item">
         <div class="cart-img" :style="`background-image: url(${item.img});`"></div>
@@ -17,13 +17,13 @@
         <!-- <div class="cart-item-price">{{item.qty }}</div> -->
       </div>
       <div class="cart-total">
-        <span>{{ t('total') }}</span>
+        <span>{{ t('cart.total') }}</span>
         <span class="cart-total-sum">{{ cart.total }} {{ t('sum') }}</span>
       </div>
       <form class="order-form" @submit.prevent="submitOrder">
-        <input required :placeholder="t('your_name')" v-model="name" />
-        <input required :placeholder="t('table_number')" v-model="table" />
-        <button class="accent mt-2 order-btn" type="submit">{{ t('send_order') }}</button>
+        <input required :placeholder="t('cart.your_name')" v-model="name" />
+        <input required :placeholder="t('cart.table_number')" v-model="table" />
+        <button class="accent mt-2 order-btn" type="submit">{{ t('cart.send_order') }}</button>
       </form>
     </div>
   </section>

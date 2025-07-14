@@ -1,7 +1,7 @@
 <template>
   <section class="confirm-wrap">
     <div class="confirm-icon">✔️</div>
-    <h2 class="confirm-title">{{ t('order_accepted', { number: 123 }) }}</h2>
+    <h2 class="confirm-title">{{ t('order.accepted', { number: 123 }) }}</h2>
     <div class="confirm-details">
       <div class="confirm-row"><span>{{ t('name') }}</span> <b>{{ name }}</b></div>
       <div class="confirm-row"><span>{{ t('table') }}</span> <b>{{ table }}</b></div>
@@ -12,7 +12,7 @@
         <span class="confirm-qty">×{{ item.qty }}</span>
       </li>
     </ul>
-    <button class="accent confirm-btn" @click="goToMenu">{{ t('return_to_menu') }}</button>
+    <button class="accent confirm-btn" @click="goToMenu">{{ t('order.return_to_menu') }}</button>
   </section>
 </template>
 

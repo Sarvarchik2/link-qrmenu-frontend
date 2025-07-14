@@ -1,7 +1,7 @@
 <template>
   <transition name="fade">
     <button v-if="showButton" class="cart-fab" @click="handleClick">
-      {{ isCartPage ? t('return_to_menu') : t('view_cart') }}
+      {{ isCartPage ? t('cart.return_to_menu') : t('cart.view_cart') }}
     </button>
   </transition>
 </template>

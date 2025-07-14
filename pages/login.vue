@@ -1,10 +1,10 @@
 <template>
   <div class="login-wrap">
     <form class="login-form" @submit.prevent="login">
-      <h2 class="login-title">Вход для владельца</h2>
+      <h2 class="login-title">{{ t('login.title') }}</h2>
       <input v-model="username" type="text" placeholder="Username" required />
       <input v-model="password" type="password" placeholder="Пароль" required />
-      <button type="submit" :disabled="loading">Войти</button>
+      <button type="submit" :disabled="loading">{{ t('login.loginButton') }}</button>
       <div v-if="error" class="login-error">{{ error }}</div>
     </form>
   </div>
@@ -14,6 +14,8 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/authStore'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 
 const username = ref('')
 const password = ref('')

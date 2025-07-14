@@ -1,75 +1,77 @@
 <template>
   <div class="admin-menu modern-admin-bg">
-    <h1 class="admin-title">Меню ресторана</h1>
-    <NuxtLink to="/admin/add-dish" class="add-dish-btn accent-btn">➕ Добавить блюдо</NuxtLink>
-    <div v-if="loading" class="admin-loading">Загрузка...</div>
-    <div v-else-if="error" class="admin-error">Ошибка: {{ error }}</div>
+    <h1 class="admin-title">{{ t('admin.menu.title') }}</h1>
+    <NuxtLink to="/admin/add-dish" class="add-dish-btn accent-btn">➕ {{ t('admin.menu.addDish') }}</NuxtLink>
+    <div v-if="loading" class="admin-loading">{{ t('admin.menu.loading') }}...</div>
+    <div v-else-if="error" class="admin-error">{{ t('admin.menu.error') }}: {{ error }}</div>
     <div class="dish-list">
       <div v-for="dish in dishes" :key="dish.id" class="dish-card modern-card">
         <img :src="dish.photo && dish.photo.startsWith('/') ? 'http://127.0.0.1:8000' + dish.photo : (dish.photo || 'https://via.placeholder.com/54x54?text=No+Image')" class="dish-img" />
         <div class="dish-info">
-          <div class="dish-title">{{ dish.name }}</div>
-          <div class="dish-meta">{{ dish.price }} сум</div>
-          <div v-if="dish.description" class="dish-description">{{ dish.description }}</div>
+          <div class="dish-title">{{ t('admin.menu.dishName') }}: {{ dish.name }}</div>
+          <div class="dish-meta">{{ t('admin.menu.price') }}: {{ dish.price }} {{ t('admin.menu.sum') }}</div>
+          <div v-if="dish.description" class="dish-description">{{ t('admin.menu.dishDescription') }}: {{ dish.description }}</div>
           <div class="dish-flags">
-            <span v-if="dish.is_hit" class="flag hit">Хит</span>
-            <span v-if="dish.is_vegetarian" class="flag veg">Вег</span>
+            <span v-if="dish.is_hit" class="flag hit">{{ t('admin.menu.hit') }}</span>
+            <span v-if="dish.is_vegetarian" class="flag veg">{{ t('admin.menu.veg') }}</span>
           </div>
         </div>
         <div class="dish-actions">
-          <button class="modern-btn edit" @click="openEditModal(dish)">Изменить</button>
+          <button class="modern-btn edit" @click="openEditModal(dish)">{{ t('admin.menu.edit') }}</button>
           <button class="modern-btn delete" @click="deleteDish(dish.id)" :disabled="deletingId === dish.id">
             <span v-if="deletingId === dish.id">...</span>
-            <span v-else>Удалить</span>
+            <span v-else>{{ t('admin.menu.delete') }}</span>
           </button>
         </div>
       </div>
     </div>
-    <div v-if="deleteError" class="admin-error">Ошибка удаления: {{ deleteError }}</div>
+    <div v-if="deleteError" class="admin-error">{{ t('admin.menu.deleteError') }}: {{ deleteError }}</div>
 
     <!-- Модальное окно для редактирования блюда -->
     <div v-if="editModalOpen" class="modal-overlay" @click.self="closeEditModal">
       <div class="modal-content modern-modal">
-        <h2 class="modal-title">Изменить блюдо</h2>
+        <h2 class="modal-title">{{ t('admin.menu.editDish') }}</h2>
         <form class="edit-dish-form modern-form" @submit.prevent="saveEditDish" enctype="multipart/form-data">
-          <input v-model="editDishData.name" type="text" placeholder="Название блюда" required />
-          <textarea v-model="editDishData.description" placeholder="Описание блюда"></textarea>
-          <input v-model="editDishData.price" type="text" placeholder="Цена (например: 1500.00)" required />
+          <input v-model="editDishData.name" type="text" :placeholder="t('admin.menu.dishName')" required />
+          <textarea v-model="editDishData.description" :placeholder="t('admin.menu.dishDescription')"></textarea>
+          <input v-model="editDishData.price" type="text" :placeholder="t('admin.menu.price')" required />
           <div class="checkboxes">
             <label>
               <input v-model="editDishData.is_hit" type="checkbox" />
-              Хит продаж
+              {{ t('admin.menu.hitSales') }}
             </label>
             <label>
               <input v-model="editDishData.is_vegetarian" type="checkbox" />
-              Вегетарианское
+              {{ t('admin.menu.vegetarian') }}
             </label>
           </div>
           <div class="photo-upload-block">
-            <label class="photo-label">Фото блюда</label>
+            <label class="photo-label">{{ t('admin.menu.dishPhoto') }}</label>
             <div class="photo-dropzone" @dragover.prevent @drop.prevent="onEditDrop" @click="openEditFileDialog">
               <input ref="editFileInput" type="file" accept="image/*" style="display:none" @change="onEditFileChange" />
               <img v-if="editPhotoPreview" :src="editPhotoPreview" class="photo-preview" />
               <div v-else class="photo-placeholder">
-                <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">Фото</text></svg>
-                <div class="photo-text">Перетащите фото или нажмите</div>
+                <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">{{ t('admin.menu.photo') }}</text></svg>
+                <div class="photo-text">{{ t('admin.menu.dragOrClick') }}</div>
               </div>
             </div>
           </div>
           <div class="modal-actions">
-            <button type="button" class="modern-btn cancel" @click="closeEditModal">Отмена</button>
-            <button type="submit" class="modern-btn save" :disabled="editLoading">Сохранить</button>
+            <button type="button" class="modern-btn cancel" @click="closeEditModal">{{ t('admin.menu.cancel') }}</button>
+            <button type="submit" class="modern-btn save" :disabled="editLoading">{{ t('admin.menu.save') }}</button>
           </div>
         </form>
-        <div v-if="editError" class="add-dish-error">Ошибка: {{ editError }}</div>
+        <div v-if="editError" class="add-dish-error">{{ t('admin.menu.error') }}: {{ editError }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { apiFetch } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 const dishes = ref<any[]>([])
 const loading = ref(true)
@@ -83,7 +85,7 @@ async function fetchDishes() {
     const res = await apiFetch('/api/owner/items/')
     dishes.value = Array.isArray(res) ? res : (res.results || [])
   } catch (e: any) {
-    error.value = e?.message || 'Ошибка загрузки'
+    error.value = e?.message || t('admin.menu.loadError')
   } finally {
     loading.value = false
   }
@@ -96,7 +98,7 @@ async function deleteDish(id: number) {
     await apiFetch(`/api/owner/items/${id}/`, { method: 'DELETE' })
     await fetchDishes()
   } catch (e: any) {
-    deleteError.value = e?.message || 'Ошибка удаления'
+    deleteError.value = e?.message || t('admin.menu.deleteError')
   } finally {
     deletingId.value = null
   }
@@ -156,7 +158,7 @@ async function saveEditDish() {
     closeEditModal()
     await fetchDishes()
   } catch (e: any) {
-    editError.value = e?.message || 'Ошибка сохранения'
+    editError.value = e?.message || t('admin.menu.saveError')
   } finally {
     editLoading.value = false
   }

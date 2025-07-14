@@ -3,14 +3,20 @@
     <button class="sidebar-toggle" @click="sidebarOpen = true" v-if="isMobile && !sidebarOpen">☰</button>
     <div v-if="sidebarOpen && isMobile" class="sidebar-overlay" @click="sidebarOpen = false"></div>
     <aside class="admin-sidebar" :class="{ open: sidebarOpen || !isMobile }">
-      <div class="sidebar-title">Admin</div>
-      <NuxtLink to="/admin/dashboard" active-class="active" @click="handleSidebarLinkClick"><span>🏠</span> Дашборд</NuxtLink>
-      <NuxtLink to="/admin/menu" active-class="active" @click="handleSidebarLinkClick"><span>📋</span> Меню</NuxtLink>
-      <NuxtLink to="/admin/categories" active-class="active" @click="handleSidebarLinkClick"><span>📂</span> Категории</NuxtLink>
-      <NuxtLink to="/admin/add-dish" active-class="active" @click="handleSidebarLinkClick"><span>➕</span> Добавить блюдо</NuxtLink>
-      <NuxtLink to="/admin/orders" active-class="active" @click="handleSidebarLinkClick"><span>🛒</span> Заказы</NuxtLink>
-      <NuxtLink v-if="restaurantSlug" :to="`/menu/${restaurantSlug}`" target="_blank" @click="handleSidebarLinkClick"><span>🌐</span> Мой ресторан (публично)</NuxtLink>
-      <button class="admin-logout" @click="logout"><span>🚪</span> Выйти</button>
+      <div class="sidebar-title">{{ t('admin.sidebar.title') }}</div>
+      <div class="sidebar-lang-switch">
+        <select :value="locale" @change="onLangChange" class="lang-select">
+          <option value="ru">Русский</option>
+          <option value="uz">Oʻzbekcha</option>
+        </select>
+      </div>
+      <NuxtLink to="/admin/dashboard" active-class="active" @click="handleSidebarLinkClick"><span>🏠</span> {{ t('admin.sidebar.dashboard') }}</NuxtLink>
+      <NuxtLink to="/admin/menu" active-class="active" @click="handleSidebarLinkClick"><span>📋</span> {{ t('admin.sidebar.menu') }}</NuxtLink>
+      <NuxtLink to="/admin/categories" active-class="active" @click="handleSidebarLinkClick"><span>📂</span> {{ t('admin.sidebar.categories') }}</NuxtLink>
+      <NuxtLink to="/admin/add-dish" active-class="active" @click="handleSidebarLinkClick"><span>➕</span> {{ t('admin.sidebar.addDish') }}</NuxtLink>
+      <NuxtLink to="/admin/orders" active-class="active" @click="handleSidebarLinkClick"><span>🛒</span> {{ t('admin.sidebar.orders') }}</NuxtLink>
+      <NuxtLink v-if="restaurantSlug" :to="`/menu/${restaurantSlug}`" target="_blank" @click="handleSidebarLinkClick"><span>🌐</span> {{ t('admin.sidebar.myRestaurant') }}</NuxtLink>
+      <button class="admin-logout" @click="logout"><span>🚪</span> {{ t('admin.sidebar.logout') }}</button>
       <button v-if="isMobile" class="sidebar-close" @click="sidebarOpen = false">✕</button>
     </aside>
     <main class="admin-main">
@@ -24,6 +30,11 @@ import { useRouter } from 'vue-router'
 import { onMounted, ref, onBeforeUnmount } from 'vue'
 import { useAuthStore } from '@/stores/authStore'
 import { apiFetch } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
+const { t, locale } = useI18n()
+function onLangChange(e) {
+  locale.value = e.target.value
+}
 // JWT decode helper
 function parseJwt (token) {
   try {
@@ -169,6 +180,19 @@ function handleSidebarLinkClick() {
   background: rgba(0,0,0,0.25);
   z-index: 1099;
   transition: opacity 0.2s;
+}
+.sidebar-lang-switch {
+  margin: 0 0 18px 0;
+  text-align: center;
+}
+.lang-select {
+  border-radius: 8px;
+  padding: 4px 12px;
+  border: none;
+  background: #f8fafd;
+  font-weight: bold;
+  font-size: 1rem;
+  margin-bottom: 8px;
 }
 @media (max-width: 700px) {
   .admin-sidebar {

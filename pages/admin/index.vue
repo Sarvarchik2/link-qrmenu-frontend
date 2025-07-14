@@ -1,10 +1,10 @@
 <template>
   <div class="admin-restaurants modern-admin-bg">
-    <h1 class="admin-title">Рестораны</h1>
-    <div v-if="loading" class="admin-loading">Загрузка...</div>
-    <div v-else-if="error" class="admin-error">Ошибка: {{ error }}</div>
+    <h1 class="admin-title">{{ t('admin.index.restaurants') }}</h1>
+    <div v-if="loading" class="admin-loading">{{ t('admin.index.loading') }}...</div>
+    <div v-else-if="error" class="admin-error">{{ t('admin.index.error') }}: {{ error }}</div>
     <div v-else>
-      <div v-if="restaurants.length === 0">Нет ресторанов</div>
+      <div v-if="restaurants.length === 0">{{ t('admin.index.no_restaurants') }}</div>
       <ul v-else class="restaurant-list">
         <li v-for="r in restaurants" :key="r.id" class="restaurant-item">
           <div class="restaurant-name">{{ r.name }}</div>
@@ -12,45 +12,45 @@
         </li>
       </ul>
     </div>
-    <h2 class="admin-title" style="margin-top:40px;">Категории</h2>
-    <button class="add-category-btn" @click="openAddCategoryModal">+ Добавить категорию</button>
+    <h2 class="admin-title" style="margin-top:40px;">{{ t('admin.index.categories') }}</h2>
+    <button class="add-category-btn" @click="openAddCategoryModal">+ {{ t('admin.index.add_category') }}</button>
     <form class="category-form" @submit.prevent="addCategory" v-if="false">
-      <input v-model="newCategory" type="text" placeholder="Название категории" required />
-      <button type="submit" :disabled="catLoading">Добавить</button>
+      <input v-model="newCategory" type="text" :placeholder="t('admin.index.category_name')" required />
+      <button type="submit" :disabled="catLoading">{{ t('admin.index.add') }}</button>
     </form>
-    <div v-if="catError" class="admin-error">Ошибка: {{ catError }}</div>
-    <div v-if="catLoading" class="admin-loading">Загрузка...</div>
+    <div v-if="catError" class="admin-error">{{ t('admin.index.error') }}: {{ catError }}</div>
+    <div v-if="catLoading" class="admin-loading">{{ t('admin.index.loading') }}...</div>
     <ul class="category-list">
       <li v-for="cat in categories" :key="cat.id" class="category-item">
         <span>{{ cat.name }}</span>
-        <button @click="deleteCategory(cat.id)" :disabled="catDeletingId === cat.id">Удалить</button>
+        <button @click="deleteCategory(cat.id)" :disabled="catDeletingId === cat.id">{{ t('admin.index.delete') }}</button>
       </li>
     </ul>
 
     <!-- Модальное окно для добавления категории -->
     <div v-if="addCategoryModalOpen" class="modal-overlay" @click.self="closeAddCategoryModal">
       <div class="modal-content">
-        <h2 class="modal-title">Добавить категорию</h2>
+        <h2 class="modal-title">{{ t('admin.index.add_category') }}</h2>
         <form class="add-category-form" @submit.prevent="submitAddCategory" enctype="multipart/form-data">
-          <input v-model="addCatName" type="text" placeholder="Название категории" required />
-          <textarea v-model="addCatDesc" placeholder="Описание (необязательно)"></textarea>
+          <input v-model="addCatName" type="text" :placeholder="t('admin.index.category_name')" required />
+          <textarea v-model="addCatDesc" :placeholder="t('admin.index.description')"></textarea>
           <div class="photo-upload-block">
-            <label class="photo-label">Фото категории</label>
+            <label class="photo-label">{{ t('admin.index.category_photo') }}</label>
             <div class="photo-dropzone" @dragover.prevent @drop.prevent="onCatDrop" @click="openCatFileDialog">
               <input ref="catFileInput" type="file" accept="image/*" style="display:none" @change="onCatFileChange" />
               <img v-if="addCatPhotoPreview" :src="addCatPhotoPreview" class="photo-preview" />
               <div v-else class="photo-placeholder">
-                <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">Фото</text></svg>
-                <div class="photo-text">Перетащите фото или нажмите</div>
+                <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">{{ t('admin.index.photo') }}</text></svg>
+                <div class="photo-text">{{ t('admin.index.drag_or_click') }}</div>
               </div>
             </div>
           </div>
           <div class="modal-actions">
-            <button type="button" class="modal-cancel" @click="closeAddCategoryModal">Отмена</button>
-            <button type="submit" class="modal-save" :disabled="addCatLoading">Добавить</button>
+            <button type="button" class="modal-cancel" @click="closeAddCategoryModal">{{ t('admin.index.cancel') }}</button>
+            <button type="submit" class="modal-save" :disabled="addCatLoading">{{ t('admin.index.add') }}</button>
           </div>
         </form>
-        <div v-if="addCatError" class="add-dish-error">Ошибка: {{ addCatError }}</div>
+        <div v-if="addCatError" class="add-dish-error">{{ t('admin.index.error') }}: {{ addCatError }}</div>
       </div>
     </div>
   </div>
@@ -58,6 +58,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { apiFetch } from '@/utils/api'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 const restaurants = ref<any[]>([])
 const loading = ref(true)
@@ -85,7 +87,7 @@ async function fetchCategories() {
     const res = await apiFetch('/api/owner/categories/')
     categories.value = Array.isArray(res) ? res : (res.results || [])
   } catch (e: any) {
-    catError.value = e?.message || 'Ошибка загрузки категорий'
+    catError.value = e?.message || t('error_loading_categories')
   } finally {
     catLoading.value = false
   }
@@ -103,7 +105,7 @@ async function addCategory() {
     newCategory.value = ''
     await fetchCategories()
   } catch (e: any) {
-    catError.value = e?.message || 'Ошибка добавления'
+    catError.value = e?.message || t('error_adding')
   } finally {
     catLoading.value = false
   }
@@ -116,7 +118,7 @@ async function deleteCategory(id: number) {
     await apiFetch(`/api/owner/categories/${id}/`, { method: 'DELETE' })
     await fetchCategories()
   } catch (e: any) {
-    catError.value = e?.message || 'Ошибка удаления'
+    catError.value = e?.message || t('error_deleting')
   } finally {
     catDeletingId.value = null
   }
@@ -165,7 +167,7 @@ async function submitAddCategory() {
     closeAddCategoryModal()
     await fetchCategories()
   } catch (e: any) {
-    addCatError.value = e?.message || 'Ошибка добавления'
+    addCatError.value = e?.message || t('error_adding')
   } finally {
     addCatLoading.value = false
   }
@@ -176,7 +178,7 @@ onMounted(async () => {
     const res = await apiFetch('/api/admin/restaurants/')
     restaurants.value = Array.isArray(res) ? res : (res.results || [])
   } catch (e: any) {
-    error.value = e?.message || 'Ошибка загрузки'
+    error.value = e?.message || t('error_loading')
   } finally {
     loading.value = false
   }

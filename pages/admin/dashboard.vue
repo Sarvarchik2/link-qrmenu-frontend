@@ -1,8 +1,8 @@
 <template>
   <div class="dashboard-root beautiful-ui">
-    <h1 class="dashboard-title">Дашборд ресторана</h1>
+    <h1 class="dashboard-title">{{ t('admin_dashboard_title') }}</h1>
     <div class="date-range-filter">
-      <label>Период:</label>
+      <label>{{ t('admin_period') }}:</label>
       <input type="date" v-model="dateFrom" class="date-input" />
       <span style="margin: 0 6px;">—</span>
       <input type="date" v-model="dateTo" class="date-input" />
@@ -10,40 +10,40 @@
     <div class="quick-actions-row">
       <button class="quick-action" @click="goTo('/admin/add-dish')">
         <span class="qa-svg"> <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect width="32" height="32" rx="12" fill="#1a9c6b"/><path d="M16 10v12M10 16h12" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> </span>
-        <span>Добавить блюдо</span>
+        <span>{{ t('admin_add_dish') }}</span>
       </button>
       <button class="quick-action" @click="goTo('/admin/categories')">
         <span class="qa-svg"> <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect width="32" height="32" rx="12" fill="#4fd1c5"/><path d="M10 12h12M10 16h12M10 20h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> </span>
-        <span>Категории</span>
+        <span>{{ t('admin_categories') }}</span>
       </button>
       <button class="quick-action" @click="goTo('/admin/orders')">
         <span class="qa-svg"> <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect width="32" height="32" rx="12" fill="#1a9c6b"/><path d="M10 12h12M10 16h12M10 20h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> </span>
-        <span>Заказы</span>
+        <span>{{ t('admin_orders') }}</span>
       </button>
     </div>
     <div class="dashboard-widgets beautiful-widgets">
       <div class="dashboard-widget">
         <div class="widget-icon">🍽️</div>
         <div class="widget-value">{{ itemsCount }}</div>
-        <div class="widget-label">Блюд в меню</div>
+        <div class="widget-label">{{ t('admin_menu_items') }}</div>
       </div>
       <div class="dashboard-widget">
         <div class="widget-icon">🛒</div>
         <div class="widget-value">{{ ordersCount }}</div>
-        <div class="widget-label">Заказов</div>
+        <div class="widget-label">{{ t('admin_orders_count') }}</div>
       </div>
       <div class="dashboard-widget">
         <div class="widget-icon">💰</div>
         <div class="widget-value">{{ formatSum(todayRevenue) }}</div>
-        <div class="widget-label">Выручка, сум</div>
+        <div class="widget-label">{{ t('admin_revenue_sum') }}</div>
       </div>
     </div>
     <div class="dashboard-graph beautiful-graph">
       <canvas v-if="ordersByDay.length" ref="ordersChart"></canvas>
-      <div v-else class="graph-placeholder">Нет данных для графика</div>
+      <div v-else class="graph-placeholder">{{ t('admin_no_graph_data') }}</div>
     </div>
     <div v-if="topDishes.length" class="popular-dishes-block beautiful-block">
-      <h3 class="popular-title">Популярные блюда</h3>
+      <h3 class="popular-title">{{ t('admin_popular_dishes') }}</h3>
       <div class="popular-list">
         <div v-for="dish in topDishes" :key="dish.id" class="popular-dish beautiful-card">
           <img v-if="dish.photo" :src="dish.photo" class="popular-dish-img" />
@@ -53,17 +53,17 @@
       </div>
     </div>
     <div v-if="todayRevenue !== null" class="finance-summary-block beautiful-block">
-      <div class="finance-row"><span>Выручка за сегодня:</span> <b>{{ formatSum(todayRevenue) }} сум</b></div>
-      <div class="finance-row"><span>Средний чек:</span> <b>{{ formatSum(todayAvgCheck) }} сум</b></div>
+      <div class="finance-row"><span>{{ t('admin_today_revenue') }}:</span> <b>{{ formatSum(todayRevenue) }} {{ t('sum') }}</b></div>
+      <div class="finance-row"><span>{{ t('admin_avg_check') }}:</span> <b>{{ formatSum(todayAvgCheck) }} {{ t('sum') }}</b></div>
     </div>
     <div v-if="todayOrders.length" class="today-orders-block beautiful-block">
-      <h3 class="today-title">Сегодняшние заказы</h3>
+      <h3 class="today-title">{{ t('admin_today_orders') }}</h3>
       <div class="today-list">
         <div v-for="order in todayOrders" :key="order.id" class="today-order beautiful-card">
-          <div class="today-order-row"><b>#{{ order.id }}</b> — {{ order.guest_name || 'Гость' }}, стол {{ order.table_number }}</div>
-          <div class="today-order-row">Сумма: <b>{{ formatSum(order.total) }} сум</b></div>
-          <div class="today-order-row">Статус: <span :class="'status-label status-'+order.status">{{ getStatusText(order.status) }}</span></div>
-          <div class="today-order-row">Время: {{ formatTime(order.created_at) }}</div>
+          <div class="today-order-row"><b>#{{ order.id }}</b> — {{ order.guest_name || t('admin_guest') }}, {{ t('table') }} {{ order.table_number }}</div>
+          <div class="today-order-row">{{ t('admin_sum') }}: <b>{{ formatSum(order.total) }} {{ t('sum') }}</b></div>
+          <div class="today-order-row">{{ t('admin_status') }}: <span :class="'status-label status-'+order.status">{{ getStatusText(order.status) }}</span></div>
+          <div class="today-order-row">{{ t('admin_time') }}: {{ formatTime(order.created_at) }}</div>
         </div>
       </div>
     </div>
@@ -75,6 +75,8 @@ import { ref, onMounted, nextTick, onBeforeUnmount } from 'vue';
 import { apiFetch } from '@/utils/api';
 import Chart from 'chart.js/auto';
 import { useRouter } from 'vue-router';
+import { useI18n } from 'vue-i18n';
+const { t } = useI18n();
 definePageMeta({ layout: 'admin', middleware: 'auth' })
 
 const itemsCount = ref(0);

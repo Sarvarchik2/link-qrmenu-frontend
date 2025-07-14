@@ -1,16 +1,16 @@
 <template>
   <div style="padding: 0 16px;">
     <div class="flex" style="gap: 12px; overflow-x: auto; padding: 8px 0 0 0; margin-bottom: 12px;">
-      <button :class="['tab-btn', {active: activeTab === 'main'}]" @click="activeTab = 'main'">{{ t('main_menu') }}</button>
-      <button :class="['tab-btn', {active: activeTab === 'bar'}]" @click="activeTab = 'bar'">{{ t('bar') }}</button>
+      <button :class="['tab-btn', {active: activeTab === 'main'}]" @click="activeTab = 'main'">{{ t('tabs.main_menu') }}</button>
+      <button :class="['tab-btn', {active: activeTab === 'bar'}]" @click="activeTab = 'bar'">{{ t('tabs.bar') }}</button>
     </div>
     <div class="search-wrap">
-      <input type="text" v-model="search" :placeholder="t('search')" class="search-input">
+      <input type="text" v-model="search" :placeholder="t('tabs.search')" class="search-input">
       <span class="search-icon">🔍</span>
     </div>
     <div style="display: flex; flex-direction: column; gap: 18px;">
       <div v-for="cat in categories" :key="cat.id" class="cat-card" :style="`background-image: url(${cat.img});`" @click="goToCategory(cat.id)">
-        <div class="cat-title">{{ t(cat.name) }}</div>
+        <div class="cat-title">{{ t('category.' + cat.name) }}</div>
       </div>
     </div>
   </div>
