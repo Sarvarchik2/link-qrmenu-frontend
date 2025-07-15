@@ -126,9 +126,7 @@ onMounted(fetchCategories)
 
 <style scoped>
 .modern-admin-bg {
-  background: #fff;
   border-radius: 24px;
-  box-shadow: 0 4px 32px #1a9c6b11;
   padding: 32px 24px 28px 24px;
   max-width: 480px;
   margin: 48px auto 0 auto;
@@ -297,7 +295,6 @@ onMounted(fetchCategories)
 @media (max-width: 700px) {
   .modern-admin-bg {
     max-width: 99vw;
-    padding: 10px 1vw 10px 1vw;
     border-radius: 14px;
     margin-top: 12px;
   }
@@ -328,7 +325,6 @@ onMounted(fetchCategories)
 }
 @media (max-width: 400px) {
   .modern-admin-bg {
-    padding: 4px 2px 4px 2px;
     border-radius: 8px;
   }
   .add-dish-form input,

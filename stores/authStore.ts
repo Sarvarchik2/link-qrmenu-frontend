@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia';
+import piniaPersist from 'pinia-plugin-persistedstate'
 
 const API_URL = 'http://127.0.0.1:8000';
 
@@ -47,4 +48,5 @@ export const useAuthStore = defineStore('auth', {
       return data.access;
     },
   },
+  persist: true
 }); 

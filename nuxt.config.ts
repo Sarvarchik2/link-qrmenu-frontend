@@ -6,6 +6,11 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxtjs/i18n',
   ],
+  pinia: {
+    plugins: [
+      'pinia-plugin-persistedstate',
+    ],
+  },
   i18n: {
     // Локали и файлы переводов
     locales: [

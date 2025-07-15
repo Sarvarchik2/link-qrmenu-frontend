@@ -1,12 +1,13 @@
 <template>
   <div class="admin-categories modern-admin-bg">
     <h1 class="admin-title">Категории</h1>
-    <button class="add-category-btn accent-btn" @click="openAddCategoryModal">➕ Добавить категорию</button>
+    <button class="add-category-btn accent-btn" @click="openAddCategoryModal">+ Добавить категорию</button>
     <div v-if="catError" class="admin-error">Ошибка: {{ catError }}</div>
     <div v-if="catLoading" class="admin-loading">Загрузка...</div>
     <ul class="category-list">
       <li v-for="cat in categories" :key="cat.id" class="category-item modern-card">
         <span class="category-name">{{ cat.name }}</span>
+        <button class="modern-btn edit" @click="openEditCategoryModal(cat)">Редактировать</button>
         <button class="modern-btn delete" @click="deleteCategory(cat.id)" :disabled="catDeletingId === cat.id">Удалить</button>
       </li>
     </ul>
@@ -37,6 +38,32 @@
         <div v-if="addCatError" class="add-dish-error">Ошибка: {{ addCatError }}</div>
       </div>
     </div>
+    <!-- Модалка редактирования -->
+    <div v-if="editCategoryModalOpen" class="modal-overlay" @click.self="closeEditCategoryModal">
+      <div class="modal-content modern-modal">
+        <h2 class="modal-title">Редактировать категорию</h2>
+        <form class="edit-category-form modern-form" @submit.prevent="submitEditCategory" enctype="multipart/form-data">
+          <input v-model="editCatName" type="text" placeholder="Название категории" required />
+          <textarea v-model="editCatDesc" placeholder="Описание (необязательно)"></textarea>
+          <div class="photo-upload-block">
+            <label class="photo-label">Фото категории</label>
+            <div class="photo-dropzone" @dragover.prevent @drop.prevent="onEditCatDrop" @click="openEditCatFileDialog">
+              <input ref="editCatFileInput" type="file" accept="image/*" style="display:none" @change="onEditCatFileChange" />
+              <img v-if="editCatPhotoPreview" :src="editCatPhotoPreview" class="photo-preview" />
+              <div v-else class="photo-placeholder">
+                <svg width="48" height="48" fill="#bbb"><rect width="100%" height="100%" rx="12" fill="#f5f5f5"/><text x="50%" y="55%" text-anchor="middle" fill="#bbb" font-size="16">Фото</text></svg>
+                <div class="photo-text">Перетащите фото или нажмите</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="modern-btn cancel" @click="closeEditCategoryModal">Отмена</button>
+            <button type="submit" class="modern-btn save" :disabled="editCatLoading">Сохранить</button>
+          </div>
+        </form>
+        <div v-if="editCatError" class="add-dish-error">Ошибка: {{ editCatError }}</div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -59,6 +86,17 @@ const addCatError = ref('')
 const catFileInput = ref<HTMLInputElement|null>(null)
 const restaurantId = ref<number|null>(null)
 
+// 1. СТЕЙТ для редактирования
+const editCategoryModalOpen = ref(false)
+const editCatId = ref<number|null>(null)
+const editCatName = ref('')
+const editCatDesc = ref('')
+const editCatPhotoFile = ref<File|null>(null)
+const editCatPhotoPreview = ref<string|null>(null)
+const editCatLoading = ref(false)
+const editCatError = ref('')
+const editCatFileInput = ref<HTMLInputElement|null>(null)
+
 async function fetchCategories() {
   catLoading.value = true
   catError.value = ''
@@ -76,10 +114,12 @@ async function deleteCategory(id: number) {
   catError.value = ''
   catDeletingId.value = id
   try {
-    await apiFetch(`/api/owner/categories/${id}/`, { method: 'DELETE' })
+    const res = await apiFetch(`/api/owner/categories/${id}/`, { method: 'DELETE' })
+    // apiFetch выбросит ошибку, если не ok
     await fetchCategories()
   } catch (e: any) {
     catError.value = e?.message || 'Ошибка удаления'
+    await fetchCategories()
   } finally {
     catDeletingId.value = null
   }
@@ -153,6 +193,59 @@ async function submitAddCategory() {
   }
 }
 
+// 2. Открытие модалки редактирования
+function openEditCategoryModal(cat: any) {
+  editCatId.value = cat.id
+  editCatName.value = cat.name
+  editCatDesc.value = cat.description || ''
+  editCatPhotoFile.value = null
+  editCatPhotoPreview.value = cat.photo || null
+  editCatError.value = ''
+  editCategoryModalOpen.value = true
+}
+function closeEditCategoryModal() {
+  editCategoryModalOpen.value = false
+}
+function onEditCatFileChange(e: Event) {
+  const files = (e.target as HTMLInputElement).files
+  if (files && files[0]) {
+    editCatPhotoFile.value = files[0]
+    editCatPhotoPreview.value = URL.createObjectURL(files[0])
+  }
+}
+function onEditCatDrop(e: DragEvent) {
+  const files = e.dataTransfer?.files
+  if (files && files[0]) {
+    editCatPhotoFile.value = files[0]
+    editCatPhotoPreview.value = URL.createObjectURL(files[0])
+  }
+}
+function openEditCatFileDialog() {
+  editCatFileInput.value?.click()
+}
+// 3. PATCH-запрос
+async function submitEditCategory() {
+  if (!editCatId.value) return
+  editCatError.value = ''
+  editCatLoading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('name', editCatName.value)
+    formData.append('description', editCatDesc.value)
+    if (editCatPhotoFile.value) formData.append('photo', editCatPhotoFile.value)
+    await apiFetch(`/api/owner/categories/${editCatId.value}/`, {
+      method: 'PATCH',
+      body: formData
+    })
+    closeEditCategoryModal()
+    await fetchCategories()
+  } catch (e: any) {
+    editCatError.value = e?.message || 'Ошибка редактирования'
+  } finally {
+    editCatLoading.value = false
+  }
+}
+
 onMounted(async () => {
   await fetchRestaurantId()
   await fetchCategories()
@@ -161,9 +254,7 @@ onMounted(async () => {
 
 <style scoped>
 .modern-admin-bg {
-  background: #fff;
   border-radius: 24px;
-  box-shadow: 0 4px 32px #1a9c6b11;
   padding: 32px 24px 28px 24px;
   max-width: 700px;
   margin: 48px auto 0 auto;
@@ -449,7 +540,7 @@ onMounted(async () => {
   box-shadow: 0 4px 32px #1a9c6b22;
   padding: 36px 24px 32px 24px;
   max-width: 420px;
-  margin: 48px auto 0 auto;
+  margin: 18px;
 }
 .modern-form input,
 .modern-form select,

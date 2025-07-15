@@ -104,8 +104,11 @@ const deleteLoading = ref(false)
 const modalError = ref('')
 const statusFilter = ref('')
 const filteredOrders = computed(() => {
-  if (!statusFilter.value) return orders.value
-  return orders.value.filter(o => o.status === statusFilter.value)
+  let arr = orders.value.slice()
+  // сортировка по дате (новые сверху)
+  arr.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  if (!statusFilter.value) return arr
+  return arr.filter(o => o.status === statusFilter.value)
 })
 function openOrderModal(order: any) {
   selectedOrder.value = { ...order }
@@ -187,9 +190,7 @@ onMounted(async () => {
   box-sizing: border-box;
 }
 .modern-admin-bg {
-  background: #fff;
   border-radius: 24px;
-  box-shadow: 0 4px 32px #1a9c6b11;
   padding: 32px 24px 28px 24px;
   max-width: 900px;
   margin: 48px auto 0 auto;
@@ -210,7 +211,7 @@ onMounted(async () => {
 }
 .order-card {
   background: #f8fafd;
-  border-radius: 18px;
+  border-radius: 28px;
   box-shadow: 0 2px 12px #1a9c6b11;
   padding: 22px;
   min-width: 210px;
@@ -438,7 +439,6 @@ onMounted(async () => {
 @media (max-width: 700px) {
   .modern-admin-bg {
     max-width: 99vw;
-    padding: 10px 1vw 10px 1vw;
     border-radius: 14px;
     margin-top: 12px;
   }
@@ -448,30 +448,20 @@ onMounted(async () => {
   }
   .order-list {
     flex-direction: column;
-    gap: 8px;
   }
   .order-card {
     min-width: 0;
     max-width: 99vw;
-    border-radius: 10px;
     gap: 7px;
   }
 }
 @media (max-width: 400px) {
   .modern-admin-bg {
-    padding: 4px 2px 4px 2px;
     border-radius: 8px;
-  }
-  .order-card {
-    border-radius: 6px;
   }
 }
 @media (max-width: 318px) {
   .modern-admin-bg {
-    padding: 2px 1px 2px 1px;
-    border-radius: 4px;
-  }
-  .order-card {
     border-radius: 4px;
   }
 }

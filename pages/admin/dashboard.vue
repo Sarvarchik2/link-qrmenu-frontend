@@ -7,20 +7,6 @@
       <span style="margin: 0 6px;">—</span>
       <input type="date" v-model="dateTo" class="date-input" />
     </div>
-    <div class="quick-actions-row">
-      <button class="quick-action" @click="goTo('/admin/add-dish')">
-        <span class="qa-svg"> <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect width="32" height="32" rx="12" fill="#1a9c6b"/><path d="M16 10v12M10 16h12" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> </span>
-        <span>{{ t('admin_add_dish') }}</span>
-      </button>
-      <button class="quick-action" @click="goTo('/admin/categories')">
-        <span class="qa-svg"> <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect width="32" height="32" rx="12" fill="#4fd1c5"/><path d="M10 12h12M10 16h12M10 20h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> </span>
-        <span>{{ t('admin_categories') }}</span>
-      </button>
-      <button class="quick-action" @click="goTo('/admin/orders')">
-        <span class="qa-svg"> <svg width="32" height="32" fill="none" viewBox="0 0 32 32"><rect width="32" height="32" rx="12" fill="#1a9c6b"/><path d="M10 12h12M10 16h12M10 20h8" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/></svg> </span>
-        <span>{{ t('admin_orders') }}</span>
-      </button>
-    </div>
     <div class="dashboard-widgets beautiful-widgets">
       <div class="dashboard-widget">
         <div class="widget-icon">🍽️</div>
@@ -314,6 +300,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
   position: relative;
   overflow: hidden;
+
   animation: fadeIn 0.7s cubic-bezier(.4,1.4,.6,1) both;
 }
 .dashboard-widget:hover {
@@ -516,7 +503,7 @@ onBeforeUnmount(() => {
   }
   .dashboard-widget {
     padding: 10px 4px 8px 4px;
-    min-width: 60px;
+    width: 100%;
   }
   .widget-icon {
     font-size: 1.2rem;
@@ -569,7 +556,10 @@ onBeforeUnmount(() => {
     gap: 6px;
   }
   .today-order.beautiful-card {
-    padding: 6px 6px;
+    padding: 20px 14px;
+    display: FLEX;
+    gap: 10px;
+    flex-direction: column;
     font-size: 0.95rem;
     border-left: 3px solid #1a9c6b;
   }

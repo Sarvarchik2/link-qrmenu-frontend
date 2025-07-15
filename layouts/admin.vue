@@ -60,8 +60,16 @@ function logout() {
   router.push('/login')
 }
 onMounted(() => {
-  if (localStorage.getItem('admin_auth') !== '1') {
-    router.push('/login')
+  if (typeof window !== 'undefined') {
+    setTimeout(() => {
+      const access = localStorage.getItem('access')
+      if (access && !auth.access) {
+        auth.access = access
+      }
+      if (!auth.access) {
+        router.push('/login')
+      }
+    }, 150)
   }
 })
 const sidebarOpen = ref(false)
